@@ -197,7 +197,7 @@ function calculateTotalClosurePnL(operation) {
     return operation.closures.reduce((sum, closure) => sum + calculateClosurePnL(operation, closure), 0);
 }
 
-// Renderizar timeline
+// Renderizar timeline horizontal
 function renderTimeline() {
     loadDashboardOperations();
     combineOperations();
@@ -209,113 +209,134 @@ function renderTimeline() {
         return;
     }
 
-    timeline.innerHTML = allOperations.map((operation, index) => {
-        const expiryDate = new Date(operation.expiryDate);
-        const daysToExpiry = Math.ceil((expiryDate - new Date()) / (1000 * 60 * 60 * 24));
-        const closedQuantity = operation.closures?.reduce((sum, c) => sum + c.quantity, 0) || 0;
-        const openQuantity = operation.quantity - closedQuantity;
-        const typeBadge = operation.type.includes('call') ? 'badge-call' : 'badge-put';
-        const typeLabel = getTypeLabel(operation.type);
-        const totalPnL = calculateTotalClosurePnL(operation);
-        const avgClosePrice = calculateAverageClosePrice(operation.closures || []);
-        const sourceLabel = operation.fromDashboard ? ' (Dashboard)' : '';
-
-        let statusBadge = 'status-open';
-        if (closedQuantity > 0 && openQuantity > 0) {
-            statusBadge = 'status-partial';
-        } else if (openQuantity === 0) {
-            statusBadge = 'status-closed';
+    // Agrupar operações por data
+    const operationsByDate = {};
+    allOperations.forEach(operation => {
+        const dateKey = operation.expiryDate;
+        if (!operationsByDate[dateKey]) {
+            operationsByDate[dateKey] = [];
         }
+        operationsByDate[dateKey].push(operation);
+    });
+
+    // Criar itens de timeline
+    const timelineItems = Object.keys(operationsByDate).sort().map((dateKey, index) => {
+        const operations = operationsByDate[dateKey];
+        const expiryDate = new Date(dateKey);
+        const daysToExpiry = Math.ceil((expiryDate - new Date()) / (1000 * 60 * 60 * 24));
+
+        // Renderizar cards das operações da mesma data
+        const cardsHTML = operations.map(operation => {
+            const closedQuantity = operation.closures?.reduce((sum, c) => sum + c.quantity, 0) || 0;
+            const openQuantity = operation.quantity - closedQuantity;
+            const typeBadge = operation.type.includes('call') ? 'badge-call' : 'badge-put';
+            const typeLabel = getTypeLabel(operation.type);
+            const totalPnL = calculateTotalClosurePnL(operation);
+            const avgClosePrice = calculateAverageClosePrice(operation.closures || []);
+            const sourceLabel = operation.fromDashboard ? ' (Dashboard)' : '';
+
+            let statusBadge = 'status-open';
+            if (closedQuantity > 0 && openQuantity > 0) {
+                statusBadge = 'status-partial';
+            } else if (openQuantity === 0) {
+                statusBadge = 'status-closed';
+            }
+
+            return `
+                <div class="expiry-card">
+                    <div class="expiry-header">
+                        <div>
+                            <div class="expiry-title">${operation.asset} - Strike ${operation.strike.toFixed(2)}${sourceLabel}</div>
+                            <small style="color: var(--text-secondary); font-size: 0.7rem;">${operation.notes || ''}</small>
+                        </div>
+                        <span class="expiry-badge ${typeBadge}">${typeLabel}</span>
+                    </div>
+
+                    <div class="expiry-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Qtd:</span>
+                            <span class="detail-value">${operation.quantity.toFixed(2)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Entrada:</span>
+                            <span class="detail-value">R$ ${operation.entryPrice.toFixed(2)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Aberta:</span>
+                            <span class="detail-value" style="color: var(--primary-color);">${openQuantity.toFixed(2)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Encerrada:</span>
+                            <span class="detail-value" style="color: var(--success-color);">${closedQuantity.toFixed(2)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">IV:</span>
+                            <span class="detail-value">${operation.iv.toFixed(1)}%</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Preço Saída:</span>
+                            <span class="detail-value">R$ ${avgClosePrice.toFixed(2)}</span>
+                        </div>
+                    </div>
+
+                    ${operation.closures && operation.closures.length > 0 ? `
+                        <div class="closures-section">
+                            <div class="closures-title">📊 Encerramentos</div>
+                            ${operation.closures.map(closure => {
+                                const closurePnL = calculateClosurePnL(operation, closure);
+                                const pnlClass = closurePnL >= 0 ? 'positive' : 'negative';
+                                const pnlSign = closurePnL >= 0 ? '+' : '';
+                                return `
+                                    <div class="closure-item">
+                                        <div class="closure-info">
+                                            <div class="closure-qty">Qtd: ${closure.quantity.toFixed(2)} @ R$ ${closure.price.toFixed(2)}</div>
+                                            <div class="closure-price">${new Date(closure.date + 'T00:00:00').toLocaleDateString('pt-BR')}</div>
+                                        </div>
+                                        <div class="closure-pnl ${pnlClass}">${pnlSign}R$ ${Math.abs(closurePnL).toFixed(2)}</div>
+                                        <button class="btn-delete" onclick="deleteClosureItem(${operation.id}, ${closure.timestamp})">×</button>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+
+                        <div class="summary-section">
+                            <div class="summary-row">
+                                <span class="summary-label">Preço Médio:</span>
+                                <span class="summary-value">R$ ${avgClosePrice.toFixed(2)}</span>
+                            </div>
+                            <div class="summary-row">
+                                <span class="summary-label">P&L Total:</span>
+                                <span class="summary-value" style="color: ${totalPnL >= 0 ? 'var(--success-color)' : 'var(--danger-color)'};">${totalPnL >= 0 ? '+' : ''}R$ ${totalPnL.toFixed(2)}</span>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <div class="position-status">
+                        <span class="status-badge ${statusBadge}">
+                            ${statusBadge === 'status-open' ? '🟢 Aberta' : statusBadge === 'status-partial' ? '🟡 Parcial' : '🟢 Encerrada'}
+                        </span>
+                    </div>
+
+                    <div class="expiry-actions">
+                        <button class="btn-close" onclick="openClosePartialModal(${operation.id})">💰 Encerrar</button>
+                        ${!operation.fromDashboard ? `<button class="btn-delete" onclick="deleteExpiryOperation(${operation.id})">🗑️ Deletar</button>` : '<span>Sincronizado</span>'}
+                    </div>
+                </div>
+            `;
+        }).join('');
 
         return `
             <div class="timeline-item">
-                <div class="timeline-marker">${index + 1}</div>
+                <div class="timeline-marker"></div>
+                <div class="timeline-date">${expiryDate.toLocaleDateString('pt-BR')}<br><small style="font-size: 0.7rem; color: var(--text-secondary);">${daysToExpiry} dias</small></div>
                 <div class="timeline-content">
-                    <div class="timeline-date">${expiryDate.toLocaleDateString('pt-BR')} (${daysToExpiry} dias)</div>
-                    
-                    <div class="expiry-card">
-                        <div class="expiry-header">
-                            <div>
-                                <div class="expiry-title">${operation.asset} - Strike ${operation.strike.toFixed(2)}${sourceLabel}</div>
-                                <small style="color: var(--text-secondary);">${operation.notes || ''}</small>
-                            </div>
-                            <span class="expiry-badge ${typeBadge}">${typeLabel}</span>
-                        </div>
-
-                        <div class="expiry-details">
-                            <div class="detail-row">
-                                <span class="detail-label">Qtd Total:</span>
-                                <span class="detail-value">${operation.quantity.toFixed(2)}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Preço Entrada:</span>
-                                <span class="detail-value">R$ ${operation.entryPrice.toFixed(2)}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Qtd Aberta:</span>
-                                <span class="detail-value" style="color: var(--primary-color);">${openQuantity.toFixed(2)}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Qtd Encerrada:</span>
-                                <span class="detail-value" style="color: var(--success-color);">${closedQuantity.toFixed(2)}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">IV:</span>
-                                <span class="detail-value">${operation.iv.toFixed(1)}%</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Preço Médio Saída:</span>
-                                <span class="detail-value">R$ ${avgClosePrice.toFixed(2)}</span>
-                            </div>
-                        </div>
-
-                        ${operation.closures && operation.closures.length > 0 ? `
-                            <div class="closures-section">
-                                <div class="closures-title">📊 Encerramentos</div>
-                                ${operation.closures.map(closure => {
-                                    const closurePnL = calculateClosurePnL(operation, closure);
-                                    const pnlClass = closurePnL >= 0 ? 'positive' : 'negative';
-                                    const pnlSign = closurePnL >= 0 ? '+' : '';
-                                    return `
-                                        <div class="closure-item">
-                                            <div class="closure-info">
-                                                <div class="closure-qty">Qtd: ${closure.quantity.toFixed(2)} @ R$ ${closure.price.toFixed(2)}</div>
-                                                <div class="closure-price">${new Date(closure.date + 'T00:00:00').toLocaleDateString('pt-BR')}</div>
-                                            </div>
-                                            <div class="closure-pnl ${pnlClass}">${pnlSign}R$ ${Math.abs(closurePnL).toFixed(2)}</div>
-                                            <button class="btn-delete" onclick="deleteClosureItem(${operation.id}, ${closure.timestamp})" style="padding: 4px 8px; font-size: 0.75rem; margin-left: 8px;">×</button>
-                                        </div>
-                                    `;
-                                }).join('')}
-                            </div>
-
-                            <div class="summary-section">
-                                <div class="summary-row">
-                                    <span class="summary-label">Preço Médio Saída:</span>
-                                    <span class="summary-value">R$ ${avgClosePrice.toFixed(2)}</span>
-                                </div>
-                                <div class="summary-row">
-                                    <span class="summary-label">P&L Total:</span>
-                                    <span class="summary-value" style="color: ${totalPnL >= 0 ? 'var(--success-color)' : 'var(--danger-color)'};">${totalPnL >= 0 ? '+' : ''}R$ ${totalPnL.toFixed(2)}</span>
-                                </div>
-                            </div>
-                        ` : ''}
-
-                        <div class="position-status">
-                            <span class="status-badge ${statusBadge}">
-                                ${statusBadge === 'status-open' ? '🟢 Aberta' : statusBadge === 'status-partial' ? '🟡 Parcial' : '🟢 Encerrada'}
-                            </span>
-                        </div>
-
-                        <div class="expiry-actions">
-                            <button class="btn-close" onclick="openClosePartialModal(${operation.id})">💰 Encerrar</button>
-                            ${!operation.fromDashboard ? `<button class="btn-delete" onclick="deleteExpiryOperation(${operation.id})">🗑️ Deletar</button>` : '<span style="color: var(--text-secondary); font-size: 0.8rem; padding: 6px 10px;">Sincronizado com Dashboard</span>'}
-                        </div>
-                    </div>
+                    ${cardsHTML}
                 </div>
             </div>
         `;
     }).join('');
+
+    timeline.innerHTML = timelineItems;
 }
 
 // Função auxiliar
