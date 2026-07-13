@@ -69,22 +69,22 @@ function generateB3ExpiryDates() {
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
         
-        // Encontrar todas as quartas-feiras do mês (padrão B3)
-        const wednesdays = [];
+        // Encontrar todas as sextas-feiras do mês (padrão B3 para opções sobre ações)
+        const fridays = [];
         const tempDate = new Date(year, month, 1);
         
         while (tempDate.getMonth() === month) {
-            if (tempDate.getDay() === 3) { // 3 = quarta-feira
-                wednesdays.push(new Date(tempDate));
+            if (tempDate.getDay() === 5) { // 5 = sexta-feira
+                fridays.push(new Date(tempDate));
             }
             tempDate.setDate(tempDate.getDate() + 1);
         }
         
-        // Adicionar as quartas-feiras como W1, W2, W3, W4, W5
-        wednesdays.forEach((wed, index) => {
+        // Adicionar as sextas-feiras como W1, W2, W3, W4, W5
+        fridays.forEach((fri, index) => {
             const weekLabel = `W${index + 1}`;
             dates.push({
-                date: new Date(wed),
+                date: new Date(fri),
                 label: weekLabel,
                 month: month,
                 year: year,
