@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendário de Vencimentos - Best Options</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="calendar-styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>📅 Calendário de Vencimentos</h1>
+                <p class="subtitle">Linha do Tempo de Operações com Opções</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="openAddExpiryModal()">+ Adicionar Operação</button>
+                <a href="index.html" class="btn btn-secondary">← Voltar ao Dashboard</a>
+            </div>
+        </header>
+
+        <!-- Timeline -->
+        <div class="timeline-container">
+            <div class="timeline" id="timeline">
+                <!-- Timeline items serão inseridos aqui -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Adição de Operação -->
+    <div id="addExpiryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Adicionar Operação</h2>
+                <button class="close-btn" onclick="closeAddExpiryModal()">&times;</button>
+            </div>
+            <form onsubmit="addExpiryOperation(event)">
+                <div class="form-group">
+                    <label>Data de Vencimento *</label>
+                    <input type="date" id="expiryDate" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Ativo *</label>
+                        <input type="text" id="expiryAsset" placeholder="Ex: PETR4" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Strike *</label>
+                        <input type="number" id="expiryStrike" placeholder="Ex: 25.00" step="0.01" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tipo *</label>
+                        <select id="expiryType" required>
+                            <option value="">Selecione...</option>
+                            <option value="call">Call Comprada</option>
+                            <option value="put">Put Comprada</option>
+                            <option value="call-sold">Call Vendida</option>
+                            <option value="put-sold">Put Vendida</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantidade *</label>
+                        <input type="number" id="expiryQuantity" placeholder="Ex: 1" step="0.01" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Preço de Entrada *</label>
+                        <input type="number" id="expiryEntryPrice" placeholder="Ex: 0.50" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>IV (%)</label>
+                        <input type="number" id="expiryIV" placeholder="Ex: 25" step="0.1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Observações</label>
+                    <textarea id="expiryNotes" placeholder="Notas sobre a operação..." rows="2"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddExpiryModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Adicionar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Encerramento Parcial -->
+    <div id="closePartialModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Encerrar Posição</h2>
+                <button class="close-btn" onclick="closeClosePartialModal()">&times;</button>
+            </div>
+            <form onsubmit="savePartialClose(event)">
+                <input type="hidden" id="closeOperationId">
+                <div class="form-group">
+                    <label>Quantidade a Encerrar *</label>
+                    <input type="number" id="closeQuantity" placeholder="Ex: 0.5" step="0.01" required>
+                    <small id="availableQty" style="color: var(--text-secondary); margin-top: 5px;"></small>
+                </div>
+                <div class="form-group">
+                    <label>Preço de Saída *</label>
+                    <input type="number" id="closePrice" placeholder="Ex: 0.75" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Data de Encerramento</label>
+                    <input type="date" id="closeDate">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeClosePartialModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Encerrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="calendar-script.js"></script>
+</body>
+</html>
