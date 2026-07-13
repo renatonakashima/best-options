@@ -280,7 +280,7 @@ function renderTimeline() {
                                         <div class="closure-item">
                                             <div class="closure-info">
                                                 <div class="closure-qty">Qtd: ${closure.quantity.toFixed(2)} @ R$ ${closure.price.toFixed(2)}</div>
-                                                <div class="closure-price">${new Date(closure.date).toLocaleDateString('pt-BR')}</div>
+                                                <div class="closure-price">${new Date(closure.date + 'T00:00:00').toLocaleDateString('pt-BR')}</div>
                                             </div>
                                             <div class="closure-pnl ${pnlClass}">${pnlSign}R$ ${Math.abs(closurePnL).toFixed(2)}</div>
                                             <button class="btn-delete" onclick="deleteClosureItem(${operation.id}, ${closure.timestamp})" style="padding: 4px 8px; font-size: 0.75rem; margin-left: 8px;">×</button>
