@@ -400,7 +400,7 @@ function renderTimeline() {
                 <div class="timeline-date" style="color: ${monthColor};">
                     <div class="timeline-week-label">${weekLabel}</div>
                     <div class="timeline-date-text">${expiryDate.toLocaleDateString('pt-BR')}</div>
-                    <small style="font-size: 0.7rem; color: var(--text-secondary);">${daysToExpiry} dias</small>
+                    <div class="timeline-days">${daysToExpiry} dias</div>
                 </div>
                 <div class="timeline-content">
                     ${cardsHTML}
