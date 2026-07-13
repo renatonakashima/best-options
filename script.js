@@ -217,8 +217,8 @@ function renderHistory() {
 
 // Calcular P&L
 function calculatePnL(operation) {
-    const entryValue = operation.entryPrice * operation.quantity * 100; // 1 contrato = 100 ações
-    const exitValue = (operation.exitPrice || operation.currentPrice) * operation.quantity * 100;
+    const entryValue = operation.entryPrice * operation.quantity;
+    const exitValue = (operation.exitPrice || operation.currentPrice) * operation.quantity;
 
     // Para operações vendidas, o cálculo é inverso
     if (operation.operationType.includes('sold')) {

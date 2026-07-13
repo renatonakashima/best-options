@@ -79,10 +79,10 @@ Abra o arquivo `index.html` em seu navegador.
 
 O sistema calcula automaticamente o P&L de cada operação:
 
-- **Para Calls/Puts Compradas**: `(Preço Saída - Preço Entrada) × Quantidade × 100`
-- **Para Calls/Puts Vendidas**: `(Preço Entrada - Preço Saída) × Quantidade × 100`
+- **Para Calls/Puts Compradas**: `(Preço Saída - Preço Entrada) × Quantidade`
+- **Para Calls/Puts Vendidas**: `(Preço Entrada - Preço Saída) × Quantidade`
 
-*Nota: 1 contrato = 100 ações*
+*Nota: A quantidade é exatamente a que você digitar (suporta contratos unitários)*
 
 ## 🎨 Tema e Customização
 
@@ -149,9 +149,9 @@ Theta: -0.05
 ```
 
 **P&L Atual** (se preço atual = R$ 0.75):
-- Valor Entrada: 0.50 × 2 × 100 = R$ 100
-- Valor Atual: 0.75 × 2 × 100 = R$ 150
-- **P&L: +R$ 50**
+- Valor Entrada: 0.50 × 2 = R$ 1.00
+- Valor Atual: 0.75 × 2 = R$ 1.50
+- **P&L: +R$ 0.50**
 
 ## 🐛 Troubleshooting
 
