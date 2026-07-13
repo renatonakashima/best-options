@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Best Options - Monitor de Operações com Opções</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>📊 Best Options</h1>
+                <p class="subtitle">Monitor Profissional de Operações com Opções</p>
+            </div>
+            <div class="header-stats">
+                <div class="stat-box">
+                    <span class="stat-label">Carteira</span>
+                    <span class="stat-value" id="portfolioValue">R$ 0,00</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">P&L Total</span>
+                    <span class="stat-value" id="totalPnL">R$ 0,00</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button class="btn btn-primary" onclick="openAddOperationModal()">+ Nova Operação</button>
+            <button class="btn btn-secondary" onclick="exportData()">📥 Exportar</button>
+            <button class="btn btn-secondary" onclick="clearAllData()">🗑️ Limpar Dados</button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('positions')">Posições Abertas</button>
+            <button class="tab-btn" onclick="switchTab('history')">Histórico</button>
+            <button class="tab-btn" onclick="switchTab('analytics')">Análise</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- Posições Abertas -->
+            <div id="positions" class="tab-pane active">
+                <div class="positions-grid" id="positionsGrid">
+                    <div class="empty-state">
+                        <p>Nenhuma posição aberta. Clique em "+ Nova Operação" para começar.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Histórico -->
+            <div id="history" class="tab-pane">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Ativo</th>
+                            <th>Tipo</th>
+                            <th>Contrato</th>
+                            <th>Quantidade</th>
+                            <th>Preço Entrada</th>
+                            <th>Preço Saída</th>
+                            <th>P&L</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTable">
+                        <tr>
+                            <td colspan="8" class="text-center">Nenhum histórico disponível</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Análise -->
+            <div id="analytics" class="tab-pane">
+                <div class="analytics-grid">
+                    <div class="card">
+                        <h3>Resumo de Operações</h3>
+                        <div class="analytics-content">
+                            <p><strong>Total de Operações:</strong> <span id="totalOps">0</span></p>
+                            <p><strong>Operações Vencidas:</strong> <span id="expiredOps">0</span></p>
+                            <p><strong>Taxa de Acerto:</strong> <span id="winRate">0%</span></p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3>Estatísticas de P&L</h3>
+                        <div class="analytics-content">
+                            <p><strong>P&L Positivo:</strong> <span id="positivePnL" class="text-success">R$ 0,00</span></p>
+                            <p><strong>P&L Negativo:</strong> <span id="negativePnL" class="text-danger">R$ 0,00</span></p>
+                            <p><strong>Maior Ganho:</strong> <span id="maxGain" class="text-success">R$ 0,00</span></p>
+                            <p><strong>Maior Perda:</strong> <span id="maxLoss" class="text-danger">R$ 0,00</span></p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3>Volatilidade Média</h3>
+                        <div class="analytics-content">
+                            <p><strong>Volatilidade:</strong> <span id="avgVolatility">0%</span></p>
+                            <p><strong>Delta Médio:</strong> <span id="avgDelta">0</span></p>
+                            <p><strong>Theta Médio:</strong> <span id="avgTheta">0</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Nova Operação -->
+    <div id="operationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nova Operação</h2>
+                <button class="close-btn" onclick="closeAddOperationModal()">&times;</button>
+            </div>
+            <form onsubmit="addOperation(event)">
+                <div class="form-group">
+                    <label>Ativo *</label>
+                    <input type="text" id="asset" placeholder="Ex: PETR4, VALE3" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tipo de Operação *</label>
+                        <select id="operationType" required>
+                            <option value="">Selecione...</option>
+                            <option value="call">Call (Comprada)</option>
+                            <option value="put">Put (Comprada)</option>
+                            <option value="call-sold">Call (Vendida)</option>
+                            <option value="put-sold">Put (Vendida)</option>
+                            <option value="spread">Spread</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Strike *</label>
+                        <input type="number" id="strike" placeholder="Ex: 25.00" step="0.01" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Quantidade (Contratos) *</label>
+                        <input type="number" id="quantity" placeholder="Ex: 1" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Preço de Entrada *</label>
+                        <input type="number" id="entryPrice" placeholder="Ex: 0.50" step="0.01" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Data de Vencimento *</label>
+                        <input type="date" id="expiryDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Volatilidade Implícita (%)</label>
+                        <input type="number" id="iv" placeholder="Ex: 25" step="0.1">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Delta</label>
+                        <input type="number" id="delta" placeholder="Ex: 0.50" step="0.01" min="-1" max="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Theta</label>
+                        <input type="number" id="theta" placeholder="Ex: -0.05" step="0.01">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Observações</label>
+                    <textarea id="notes" placeholder="Notas sobre a operação..." rows="3"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddOperationModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Adicionar Operação</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Edição de Operação -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Operação</h2>
+                <button class="close-btn" onclick="closeEditModal()">&times;</button>
+            </div>
+            <form onsubmit="saveEditedOperation(event)">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label>Preço Atual</label>
+                    <input type="number" id="editCurrentPrice" placeholder="Ex: 0.75" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="editStatus" required>
+                        <option value="open">Aberta</option>
+                        <option value="closed">Fechada</option>
+                        <option value="expired">Expirada</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Preço de Saída (se fechada)</label>
+                    <input type="number" id="editExitPrice" placeholder="Ex: 0.75" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Data de Fechamento</label>
+                    <input type="date" id="editCloseDate">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
