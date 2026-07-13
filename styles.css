@@ -175,15 +175,15 @@ body {
 /* Positions Grid */
 .positions-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 15px;
 }
 
 .position-card {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    padding: 20px;
+    padding: 15px;
     transition: all 0.3s ease;
 }
 
@@ -196,11 +196,11 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: start;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
 }
 
 .position-title {
-    font-size: 1.3rem;
+    font-size: 1.1rem;
     font-weight: bold;
 }
 
@@ -229,9 +229,9 @@ body {
 .position-details {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 15px;
-    font-size: 0.9rem;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
 }
 
 .detail-item {
@@ -249,9 +249,9 @@ body {
 }
 
 .position-pnl {
-    padding: 15px;
+    padding: 12px;
     border-radius: 8px;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     text-align: center;
 }
 
@@ -266,22 +266,22 @@ body {
 }
 
 .pnl-value {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: bold;
 }
 
 .position-actions {
     display: flex;
-    gap: 10px;
+    gap: 8px;
 }
 
 .position-actions button {
     flex: 1;
-    padding: 8px 12px;
+    padding: 6px 10px;
     border: none;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     font-weight: 600;
     transition: all 0.3s ease;
 }
