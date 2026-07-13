@@ -1,10 +1,46 @@
 // Armazenamento de dados
 let expiryOperations = JSON.parse(localStorage.getItem('expiryOperations')) || [];
+let dashboardOperations = JSON.parse(localStorage.getItem('operations')) || [];
+let allOperations = [];
 
 // Inicializar
 document.addEventListener('DOMContentLoaded', () => {
+    loadDashboardOperations();
     renderTimeline();
 });
+
+// Carregar operações do dashboard
+function loadDashboardOperations() {
+    dashboardOperations = JSON.parse(localStorage.getItem('operations')) || [];
+}
+
+// Combinar todas as operações
+function combineOperations() {
+    allOperations = [...expiryOperations];
+    
+    // Adicionar operações do dashboard que têm data de vencimento
+    dashboardOperations.forEach(dashOp => {
+        if (dashOp.expiryDate && !expiryOperations.find(op => op.id === dashOp.id)) {
+            allOperations.push({
+                id: dashOp.id,
+                expiryDate: dashOp.expiryDate,
+                asset: dashOp.asset,
+                strike: dashOp.strike,
+                type: dashOp.operationType,
+                quantity: dashOp.quantity,
+                entryPrice: dashOp.entryPrice,
+                iv: dashOp.iv || 0,
+                notes: dashOp.notes || '',
+                closures: [],
+                fromDashboard: true,
+                createdAt: dashOp.createdAt
+            });
+        }
+    });
+
+    // Ordenar por data de vencimento
+    allOperations.sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate));
+}
 
 // Salvar dados
 function saveExpiryData() {
@@ -23,7 +59,7 @@ function closeAddExpiryModal() {
 
 // Modal de Encerramento
 function openClosePartialModal(operationId) {
-    const operation = expiryOperations.find(op => op.id === operationId);
+    const operation = allOperations.find(op => op.id === operationId);
     if (!operation) return;
 
     const openQuantity = operation.quantity - (operation.closures?.reduce((sum, c) => sum + c.quantity, 0) || 0);
@@ -59,7 +95,6 @@ function addExpiryOperation(event) {
     };
 
     expiryOperations.push(operation);
-    expiryOperations.sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate));
     
     saveExpiryData();
     closeAddExpiryModal();
@@ -71,7 +106,7 @@ function savePartialClose(event) {
     event.preventDefault();
 
     const operationId = parseInt(document.getElementById('closeOperationId').value);
-    const operation = expiryOperations.find(op => op.id === operationId);
+    const operation = allOperations.find(op => op.id === operationId);
 
     if (!operation) return;
 
@@ -98,7 +133,12 @@ function savePartialClose(event) {
         timestamp: Date.now()
     });
 
-    saveExpiryData();
+    // Se a operação é do dashboard, não salvar em expiryOperations
+    // Se é do calendário, salvar
+    if (!operation.fromDashboard) {
+        saveExpiryData();
+    }
+
     closeClosePartialModal();
     renderTimeline();
 }
@@ -106,18 +146,27 @@ function savePartialClose(event) {
 // Deletar operação
 function deleteExpiryOperation(operationId) {
     if (confirm('Tem certeza que deseja deletar esta operação?')) {
-        expiryOperations = expiryOperations.filter(op => op.id !== operationId);
-        saveExpiryData();
+        const operation = allOperations.find(op => op.id === operationId);
+        
+        if (operation && !operation.fromDashboard) {
+            expiryOperations = expiryOperations.filter(op => op.id !== operationId);
+            saveExpiryData();
+        }
+        
         renderTimeline();
     }
 }
 
 // Deletar encerramento
 function deleteClosureItem(operationId, timestamp) {
-    const operation = expiryOperations.find(op => op.id === operationId);
+    const operation = allOperations.find(op => op.id === operationId);
     if (operation && operation.closures) {
         operation.closures = operation.closures.filter(c => c.timestamp !== timestamp);
-        saveExpiryData();
+        
+        if (!operation.fromDashboard) {
+            saveExpiryData();
+        }
+        
         renderTimeline();
     }
 }
@@ -150,14 +199,17 @@ function calculateTotalClosurePnL(operation) {
 
 // Renderizar timeline
 function renderTimeline() {
+    loadDashboardOperations();
+    combineOperations();
+    
     const timeline = document.getElementById('timeline');
 
-    if (expiryOperations.length === 0) {
+    if (allOperations.length === 0) {
         timeline.innerHTML = '<div class="timeline-empty"><p>Nenhuma operação com vencimento. Clique em "+ Adicionar Operação" para começar.</p></div>';
         return;
     }
 
-    timeline.innerHTML = expiryOperations.map((operation, index) => {
+    timeline.innerHTML = allOperations.map((operation, index) => {
         const expiryDate = new Date(operation.expiryDate);
         const daysToExpiry = Math.ceil((expiryDate - new Date()) / (1000 * 60 * 60 * 24));
         const closedQuantity = operation.closures?.reduce((sum, c) => sum + c.quantity, 0) || 0;
@@ -166,6 +218,7 @@ function renderTimeline() {
         const typeLabel = getTypeLabel(operation.type);
         const totalPnL = calculateTotalClosurePnL(operation);
         const avgClosePrice = calculateAverageClosePrice(operation.closures || []);
+        const sourceLabel = operation.fromDashboard ? ' (Dashboard)' : '';
 
         let statusBadge = 'status-open';
         if (closedQuantity > 0 && openQuantity > 0) {
@@ -183,7 +236,7 @@ function renderTimeline() {
                     <div class="expiry-card">
                         <div class="expiry-header">
                             <div>
-                                <div class="expiry-title">${operation.asset} - Strike ${operation.strike.toFixed(2)}</div>
+                                <div class="expiry-title">${operation.asset} - Strike ${operation.strike.toFixed(2)}${sourceLabel}</div>
                                 <small style="color: var(--text-secondary);">${operation.notes || ''}</small>
                             </div>
                             <span class="expiry-badge ${typeBadge}">${typeLabel}</span>
@@ -256,7 +309,7 @@ function renderTimeline() {
 
                         <div class="expiry-actions">
                             <button class="btn-close" onclick="openClosePartialModal(${operation.id})">💰 Encerrar</button>
-                            <button class="btn-delete" onclick="deleteExpiryOperation(${operation.id})">🗑️ Deletar</button>
+                            ${!operation.fromDashboard ? `<button class="btn-delete" onclick="deleteExpiryOperation(${operation.id})">🗑️ Deletar</button>` : '<span style="color: var(--text-secondary); font-size: 0.8rem; padding: 6px 10px;">Sincronizado com Dashboard</span>'}
                         </div>
                     </div>
                 </div>
