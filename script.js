@@ -234,7 +234,7 @@ function updatePortfolioStats() {
     let totalPnL = 0;
 
     operations.forEach(op => {
-        totalValue += op.currentPrice * op.quantity * 100;
+        totalValue += op.currentPrice * op.quantity;
         totalPnL += calculatePnL(op);
     });
 
