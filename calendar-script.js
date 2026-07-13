@@ -224,6 +224,9 @@ function renderTimeline() {
         const operations = operationsByDate[dateKey];
         const expiryDate = new Date(dateKey);
         const daysToExpiry = Math.ceil((expiryDate - new Date()) / (1000 * 60 * 60 * 24));
+        const month = expiryDate.getMonth();
+        const monthColors = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4', '#6366f1', '#14b8a6', '#f97316', '#a855f7', '#0891b2', '#dc2626'];
+        const monthColor = monthColors[month];
 
         // Renderizar cards das operações da mesma data
         const cardsHTML = operations.map(operation => {
@@ -327,8 +330,8 @@ function renderTimeline() {
 
         return `
             <div class="timeline-item">
-                <div class="timeline-marker"></div>
-                <div class="timeline-date">${expiryDate.toLocaleDateString('pt-BR')}<br><small style="font-size: 0.7rem; color: var(--text-secondary);">${daysToExpiry} dias</small></div>
+                <div class="timeline-marker" style="border-color: ${monthColor};"></div>
+                <div class="timeline-date" style="color: ${monthColor};">${expiryDate.toLocaleDateString('pt-BR')}<br><small style="font-size: 0.7rem; color: var(--text-secondary);">${daysToExpiry} dias</small></div>
                 <div class="timeline-content">
                     ${cardsHTML}
                 </div>
