@@ -42,6 +42,68 @@ function combineOperations() {
     allOperations.sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate));
 }
 
+// Gerar datas de vencimento B3
+function generateB3ExpiryDates() {
+    const dates = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Encontrar a primeira operação para começar do passado
+    let startDate = new Date(today);
+    if (allOperations.length > 0) {
+        const firstOpDate = new Date(allOperations[0].expiryDate);
+        startDate = new Date(firstOpDate);
+        startDate.setHours(0, 0, 0, 0);
+    }
+    
+    // Gerar datas para 24 meses para frente
+    const endDate = new Date(today);
+    endDate.setMonth(endDate.getMonth() + 24);
+    
+    // Começar do mês anterior à primeira operação
+    let currentDate = new Date(startDate);
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    currentDate.setDate(1);
+    
+    while (currentDate <= endDate) {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        
+        // Encontrar todas as quartas-feiras do mês (padrão B3)
+        const wednesdays = [];
+        const tempDate = new Date(year, month, 1);
+        
+        while (tempDate.getMonth() === month) {
+            if (tempDate.getDay() === 3) { // 3 = quarta-feira
+                wednesdays.push(new Date(tempDate));
+            }
+            tempDate.setDate(tempDate.getDate() + 1);
+        }
+        
+        // Adicionar as quartas-feiras como W1, W2, W3, W4, W5
+        wednesdays.forEach((wed, index) => {
+            const weekLabel = `W${index + 1}`;
+            dates.push({
+                date: new Date(wed),
+                label: weekLabel,
+                month: month,
+                year: year,
+                monthColor: getMonthColor(month)
+            });
+        });
+        
+        currentDate.setMonth(currentDate.getMonth() + 1);
+    }
+    
+    return dates;
+}
+
+// Obter cor do mês
+function getMonthColor(month) {
+    const monthColors = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4', '#6366f1', '#14b8a6', '#f97316', '#a855f7', '#0891b2', '#dc2626'];
+    return monthColors[month];
+}
+
 // Salvar dados
 function saveExpiryData() {
     localStorage.setItem('expiryOperations', JSON.stringify(expiryOperations));
@@ -197,7 +259,7 @@ function calculateTotalClosurePnL(operation) {
     return operation.closures.reduce((sum, closure) => sum + calculateClosurePnL(operation, closure), 0);
 }
 
-// Renderizar timeline horizontal
+// Renderizar timeline horizontal com datas B3
 function renderTimeline() {
     loadDashboardOperations();
     combineOperations();
@@ -209,6 +271,9 @@ function renderTimeline() {
         return;
     }
 
+    // Gerar todas as datas B3
+    const b3Dates = generateB3ExpiryDates();
+    
     // Agrupar operações por data
     const operationsByDate = {};
     allOperations.forEach(operation => {
@@ -219,14 +284,14 @@ function renderTimeline() {
         operationsByDate[dateKey].push(operation);
     });
 
-    // Criar itens de timeline
-    const timelineItems = Object.keys(operationsByDate).sort().map((dateKey, index) => {
-        const operations = operationsByDate[dateKey];
-        const expiryDate = new Date(dateKey);
+    // Criar itens de timeline com todas as datas B3
+    const timelineItems = b3Dates.map((b3Date, index) => {
+        const dateString = b3Date.date.toISOString().split('T')[0];
+        const operations = operationsByDate[dateString] || [];
+        const expiryDate = b3Date.date;
         const daysToExpiry = Math.ceil((expiryDate - new Date()) / (1000 * 60 * 60 * 24));
-        const month = expiryDate.getMonth();
-        const monthColors = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4', '#6366f1', '#14b8a6', '#f97316', '#a855f7', '#0891b2', '#dc2626'];
-        const monthColor = monthColors[month];
+        const monthColor = b3Date.monthColor;
+        const weekLabel = b3Date.label;
 
         // Renderizar cards das operações da mesma data
         const cardsHTML = operations.map(operation => {
@@ -328,10 +393,15 @@ function renderTimeline() {
             `;
         }).join('');
 
+        // Renderizar item de timeline com rótulo B3
         return `
             <div class="timeline-item">
                 <div class="timeline-marker" style="border-color: ${monthColor};"></div>
-                <div class="timeline-date" style="color: ${monthColor};">${expiryDate.toLocaleDateString('pt-BR')}<br><small style="font-size: 0.7rem; color: var(--text-secondary);">${daysToExpiry} dias</small></div>
+                <div class="timeline-date" style="color: ${monthColor};">
+                    <div class="timeline-week-label">${weekLabel}</div>
+                    <div class="timeline-date-text">${expiryDate.toLocaleDateString('pt-BR')}</div>
+                    <small style="font-size: 0.7rem; color: var(--text-secondary);">${daysToExpiry} dias</small>
+                </div>
                 <div class="timeline-content">
                     ${cardsHTML}
                 </div>
