@@ -14,11 +14,11 @@
     min-width: min-content;
 }
 
-/* Linha horizontal da timeline - Posicionada abaixo */
+/* Linha horizontal da timeline - Posicionada no meio */
 .timeline::before {
     content: '';
     position: absolute;
-    bottom: 40px;
+    top: 50%;
     left: 0;
     right: 0;
     height: 8px;
@@ -34,9 +34,10 @@
     );
     border-radius: 4px;
     z-index: 1;
+    transform: translateY(-50%);
 }
 
-/* Timeline Item */
+/* Timeline Item - Nova estrutura */
 .timeline-item {
     position: relative;
     display: flex;
@@ -44,14 +45,15 @@
     align-items: center;
     min-width: 280px;
     flex-shrink: 0;
+    height: 100%;
 }
 
-/* Marcador de data na timeline - Movido para baixo */
+/* Marcador de data na timeline */
 .timeline-marker {
     position: absolute;
-    bottom: 32px;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     width: 24px;
     height: 24px;
     background: var(--bg-color);
@@ -61,10 +63,10 @@
     flex-shrink: 0;
 }
 
-/* Data do vencimento - Movida para baixo */
+/* Data do vencimento - Abaixo da linha */
 .timeline-date {
     position: absolute;
-    bottom: -75px;
+    top: calc(50% + 50px);
     left: 50%;
     transform: translateX(-50%);
     font-size: 0.9rem;
@@ -95,12 +97,14 @@
     color: var(--text-secondary);
 }
 
-/* Container de cards da mesma data */
+/* Container de cards da mesma data - Acima da linha */
 .timeline-content {
     display: flex;
     flex-direction: column;
     gap: 10px;
     width: 100%;
+    margin-bottom: auto;
+    padding-bottom: 20px;
 }
 
 /* Expiry Card - Reduzido */
@@ -395,9 +399,5 @@
     .header-actions button,
     .header-actions a {
         width: 100%;
-    }
-
-    .timeline-date {
-        bottom: -45px;
     }
 }
