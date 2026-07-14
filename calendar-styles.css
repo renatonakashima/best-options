@@ -49,7 +49,7 @@
 /* Marcador de data na timeline */
 .timeline-marker {
     position: absolute;
-    bottom: 92px;
+    bottom: 96px;
     left: 50%;
     transform: translateX(-50%);
     width: 24px;
