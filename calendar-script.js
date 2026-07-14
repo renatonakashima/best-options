@@ -396,14 +396,14 @@ function renderTimeline() {
         // Renderizar item de timeline com rótulo B3
         return `
             <div class="timeline-item">
-                <div class="timeline-content">
-                    ${cardsHTML}
-                </div>
                 <div class="timeline-marker" style="border-color: ${monthColor};"></div>
                 <div class="timeline-date" style="color: ${monthColor};">
                     <div class="timeline-week-label">${weekLabel}</div>
                     <div class="timeline-date-text">${expiryDate.toLocaleDateString('pt-BR')}</div>
                     <div class="timeline-days">${daysToExpiry} dias</div>
+                </div>
+                <div class="timeline-content">
+                    ${cardsHTML}
                 </div>
             </div>
         `;
