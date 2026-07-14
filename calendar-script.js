@@ -393,8 +393,6 @@ function renderTimeline() {
             `;
         }).join('');
 
-        timeline.innerHTML = timelineItems;
-
         // Renderizar item de timeline com rótulo B3
         return `
             <div class="timeline-item">
@@ -411,6 +409,7 @@ function renderTimeline() {
         `;
     }).join('');
 
+    timeline.innerHTML = timelineItems;
 }
 
 // Função auxiliar
