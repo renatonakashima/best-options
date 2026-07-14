@@ -44,6 +44,7 @@
     align-items: center;
     min-width: 280px;
     flex-shrink: 0;
+    justify-content: flex-start;
 }
 
 /* Marcador de data na timeline */
@@ -59,14 +60,12 @@
     border-radius: 50%;
     z-index: 10;
     flex-shrink: 0;
+    order: 2;
 }
 
 /* Data do vencimento - Abaixo da linha */
 .timeline-date {
-    position: absolute;
-    bottom: -60px;
-    left: 50%;
-    transform: translateX(-50%);
+    position: relative;
     font-size: 0.9rem;
     font-weight: bold;
     color: var(--primary-color);
@@ -77,6 +76,8 @@
     align-items: center;
     gap: 2px;
     width: 100px;
+    order: 3;
+    margin-top: 20px;
 }
 
 .timeline-week-label {
@@ -101,7 +102,7 @@
     flex-direction: column;
     gap: 10px;
     width: 100%;
-    margin-bottom: 120px;
+    order: 1;
 }
 
 /* Expiry Card - Reduzido */
