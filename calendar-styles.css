@@ -66,18 +66,18 @@
     padding-top: 40px;
 }
 
-/* Marcador de data na timeline - Acima da linha */
+/* Marcador de data na timeline - Sobreposto à linha */
 .timeline-marker {
     position: absolute;
-    top: -16px;
+    top: -4px;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     width: 24px;
     height: 24px;
     background: var(--bg-color);
     border: 3px solid var(--primary-color);
     border-radius: 50%;
-    z-index: 10;
+    z-index: 20;
     flex-shrink: 0;
 }
 
