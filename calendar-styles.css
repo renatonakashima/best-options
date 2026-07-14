@@ -1,8 +1,27 @@
 /* Timeline Container */
 .timeline-container {
     padding: 20px 0 40px 0;
-    overflow-x: auto;
+    overflow-x: scroll;
     overflow-y: visible;
+    position: relative;
+}
+
+/* Barra de rolagem horizontal fixa */
+.timeline-container::-webkit-scrollbar {
+    height: 12px;
+}
+
+.timeline-container::-webkit-scrollbar-track {
+    background: var(--bg-color);
+}
+
+.timeline-container::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 6px;
+}
+
+.timeline-container::-webkit-scrollbar-thumb:hover {
+    background: var(--secondary-color);
 }
 
 .timeline {
@@ -47,10 +66,10 @@
     padding-top: 40px;
 }
 
-/* Marcador de data na timeline - No topo */
+/* Marcador de data na timeline - Acima da linha */
 .timeline-marker {
     position: absolute;
-    top: -4px;
+    top: -16px;
     left: 50%;
     transform: translateX(-50%);
     width: 24px;
