@@ -49,9 +49,9 @@
 /* Marcador de data na timeline */
 .timeline-marker {
     position: absolute;
-    bottom: 96px;
+    bottom: 100px;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, 50%);
     width: 24px;
     height: 24px;
     background: var(--bg-color);
