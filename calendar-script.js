@@ -435,3 +435,22 @@ window.addEventListener('click', (event) => {
         closeClosePartialModal();
     }
 });
+
+
+// Função para scroll da timeline com as setas
+function scrollTimeline(direction) {
+    const container = document.querySelector('.timeline-container');
+    const scrollAmount = 300; // pixels para scroll
+    
+    if (direction === 'left') {
+        container.scrollBy({
+            left: -scrollAmount,
+            behavior: 'smooth'
+        });
+    } else if (direction === 'right') {
+        container.scrollBy({
+            left: scrollAmount,
+            behavior: 'smooth'
+        });
+    }
+}

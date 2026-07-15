@@ -22,10 +22,14 @@
         </header>
 
         <!-- Timeline -->
-        <div class="timeline-container">
-            <div class="timeline" id="timeline">
-                <!-- Timeline items serão inseridos aqui -->
+        <div class="timeline-wrapper">
+            <button class="timeline-arrow timeline-arrow-left" id="scrollLeftBtn" onclick="scrollTimeline('left')">❮</button>
+            <div class="timeline-container">
+                <div class="timeline" id="timeline">
+                    <!-- Timeline items serão inseridos aqui -->
+                </div>
             </div>
+            <button class="timeline-arrow timeline-arrow-right" id="scrollRightBtn" onclick="scrollTimeline('right')">❯</button>
         </div>
     </div>
 

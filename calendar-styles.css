@@ -1,27 +1,51 @@
+/* Timeline Wrapper - Container com setas */
+.timeline-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+/* Setas de Navegação */
+.timeline-arrow {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    z-index: 15;
+}
+
+.timeline-arrow:hover {
+    background: var(--secondary-color);
+    transform: scale(1.1);
+}
+
+.timeline-arrow:active {
+    transform: scale(0.95);
+}
+
 /* Timeline Container */
 .timeline-container {
     padding: 20px 0 40px 0;
-    overflow-x: scroll;
+    overflow-x: auto;
     overflow-y: visible;
     position: relative;
+    flex: 1;
+    scrollbar-width: none;
 }
 
-/* Barra de rolagem horizontal fixa */
+/* Remover barra de rolagem padrão */
 .timeline-container::-webkit-scrollbar {
-    height: 12px;
-}
-
-.timeline-container::-webkit-scrollbar-track {
-    background: var(--bg-color);
-}
-
-.timeline-container::-webkit-scrollbar-thumb {
-    background: var(--primary-color);
-    border-radius: 6px;
-}
-
-.timeline-container::-webkit-scrollbar-thumb:hover {
-    background: var(--secondary-color);
+    display: none;
 }
 
 .timeline {
@@ -64,6 +88,7 @@
     min-width: 280px;
     flex-shrink: 0;
     padding-top: 40px;
+    scroll-behavior: smooth;
 }
 
 /* Marcador de data na timeline - Sobreposto à linha */
