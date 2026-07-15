@@ -116,13 +116,36 @@ function deleteOperation(id) {
 // Renderizar posições abertas
 function renderPositions() {
     const grid = document.getElementById('positionsGrid');
+    
+    // Carregar operações do calendário
+    const calendarOperations = JSON.parse(localStorage.getItem('expiryOperations')) || [];
+    
+    // Combinar operações do dashboard com as do calendário
+    const allOperations = [
+        ...operations,
+        ...calendarOperations.map(op => ({
+            id: op.id,
+            asset: op.asset,
+            strike: op.strike,
+            operationType: op.type,
+            quantity: op.quantity,
+            entryPrice: op.entryPrice,
+            currentPrice: op.entryPrice,
+            expiryDate: op.expiryDate,
+            iv: op.iv || 0,
+            delta: 0,
+            theta: 0,
+            notes: op.notes || '',
+            fromCalendar: true
+        }))
+    ];
 
-    if (operations.length === 0) {
+    if (allOperations.length === 0) {
         grid.innerHTML = '<div class="empty-state"><p>Nenhuma posição aberta. Clique em "+ Nova Operação" para começar.</p></div>';
         return;
     }
 
-    grid.innerHTML = operations.map(op => {
+    grid.innerHTML = allOperations.map(op => {
         const pnl = calculatePnL(op);
         const pnlClass = pnl >= 0 ? 'pnl-positive' : 'pnl-negative';
         const pnlSign = pnl >= 0 ? '+' : '';
