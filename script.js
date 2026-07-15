@@ -145,6 +145,20 @@ function renderPositions() {
         return;
     }
 
+    // Ordenar por data de vencimento (mais próxima primeiro) e depois por nome do ativo (alfabético)
+    allOperations.sort((a, b) => {
+        const dateA = new Date(a.expiryDate);
+        const dateB = new Date(b.expiryDate);
+        
+        // Primeiro, ordenar por data de vencimento
+        if (dateA !== dateB) {
+            return dateA - dateB;
+        }
+        
+        // Se as datas são iguais, ordenar por nome do ativo (alfabético)
+        return a.asset.localeCompare(b.asset);
+    });
+
     grid.innerHTML = allOperations.map(op => {
         const pnl = calculatePnL(op);
         const pnlClass = pnl >= 0 ? 'pnl-positive' : 'pnl-negative';
