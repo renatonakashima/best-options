@@ -159,6 +159,12 @@ function addExpiryOperation(event) {
     expiryOperations.push(operation);
     
     saveExpiryData();
+    
+    // Salvar no Firebase
+    if (useFirebase && typeof saveExpiryOperationToFirebase === 'function') {
+        saveExpiryOperationToFirebase(operation).catch(err => console.error('Erro ao salvar no Firebase:', err));
+    }
+    
     closeAddExpiryModal();
     renderTimeline();
 }
@@ -213,6 +219,11 @@ function deleteExpiryOperation(operationId) {
         if (operation && !operation.fromDashboard) {
             expiryOperations = expiryOperations.filter(op => op.id !== operationId);
             saveExpiryData();
+            
+            // Deletar do Firebase
+            if (useFirebase && typeof deleteExpiryOperationFromFirebase === 'function') {
+                deleteExpiryOperationFromFirebase(operationId).catch(err => console.error('Erro ao deletar do Firebase:', err));
+            }
         }
         
         renderTimeline();

@@ -67,6 +67,12 @@ function addOperation(event) {
 
     operations.push(operation);
     saveData();
+    
+    // Salvar no Firebase
+    if (useFirebase && typeof saveOperationToFirebase === 'function') {
+        saveOperationToFirebase(operation).catch(err => console.error('Erro ao salvar no Firebase:', err));
+    }
+    
     closeAddOperationModal();
     updatePortfolioStats();
     renderPositions();
@@ -91,6 +97,19 @@ function saveEditedOperation(event) {
             // Mover para histórico
             closedOperations.push(operation);
             operations = operations.filter(op => op.id !== id);
+            
+            // Salvar no Firebase
+            if (useFirebase && typeof saveClosedOperationToFirebase === 'function') {
+                saveClosedOperationToFirebase(operation).catch(err => console.error('Erro ao salvar no Firebase:', err));
+            }
+            if (useFirebase && typeof deleteOperationFromFirebase === 'function') {
+                deleteOperationFromFirebase(id).catch(err => console.error('Erro ao deletar do Firebase:', err));
+            }
+        } else {
+            // Atualizar no Firebase
+            if (useFirebase && typeof saveOperationToFirebase === 'function') {
+                saveOperationToFirebase(operation).catch(err => console.error('Erro ao salvar no Firebase:', err));
+            }
         }
 
         saveData();
@@ -107,6 +126,12 @@ function deleteOperation(id) {
     if (confirm('Tem certeza que deseja deletar esta operação?')) {
         operations = operations.filter(op => op.id !== id);
         saveData();
+        
+        // Deletar do Firebase
+        if (useFirebase && typeof deleteOperationFromFirebase === 'function') {
+            deleteOperationFromFirebase(id).catch(err => console.error('Erro ao deletar do Firebase:', err));
+        }
+        
         updatePortfolioStats();
         renderPositions();
         updateAnalytics();
