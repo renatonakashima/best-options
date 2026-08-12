@@ -123,9 +123,33 @@
 }
 
 .timeline-week-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 100px;
     font-size: 1.1rem;
     font-weight: bold;
     color: inherit;
+}
+
+.timeline-week-text {
+    color: inherit;
+}
+
+.timeline-option-call,
+.timeline-option-put {
+    font-size: 1.05rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.timeline-option-call {
+    color: var(--success-color, #16a34a);
+}
+
+.timeline-option-put {
+    color: var(--danger-color, #dc2626);
 }
 
 .timeline-date-text {

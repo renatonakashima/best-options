@@ -409,7 +409,11 @@ function renderTimeline() {
             <div class="timeline-item">
                 <div class="timeline-marker" style="border-color: ${monthColor};"></div>
                 <div class="timeline-date" style="color: ${monthColor};">
-                    <div class="timeline-week-label">${weekLabel}</div>
+                    <div class="timeline-week-label" aria-label="Vencimento de Call e Put">
+                        <span class="timeline-option-call" title="Call">C</span>
+                        <span class="timeline-week-text">${weekLabel}</span>
+                        <span class="timeline-option-put" title="Put">P</span>
+                    </div>
                     <div class="timeline-date-text">${expiryDate.toLocaleDateString('pt-BR')}</div>
                     <div class="timeline-days">${daysToExpiry} dias</div>
                 </div>
