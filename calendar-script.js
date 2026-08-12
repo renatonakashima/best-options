@@ -304,6 +304,10 @@ function renderTimeline() {
         const monthColor = b3Date.monthColor;
         const weekLabel = b3Date.label;
 
+        // Nomenclatura B3: Calls usam A-L e Puts usam M-X conforme o mês
+        const callLetter = String.fromCharCode('A'.charCodeAt(0) + b3Date.month);
+        const putLetter = String.fromCharCode('M'.charCodeAt(0) + b3Date.month);
+
         // Renderizar cards das operações da mesma data
         const cardsHTML = operations.map(operation => {
             const closedQuantity = operation.closures?.reduce((sum, c) => sum + c.quantity, 0) || 0;
@@ -409,10 +413,10 @@ function renderTimeline() {
             <div class="timeline-item">
                 <div class="timeline-marker" style="border-color: ${monthColor};"></div>
                 <div class="timeline-date" style="color: ${monthColor};">
-                    <div class="timeline-week-label" aria-label="Vencimento de Call e Put">
-                        <span class="timeline-option-call" title="Call">C</span>
+                    <div class="timeline-week-label" aria-label="Códigos B3 de Call e Put">
+                        <span class="timeline-option-call" title="Código mensal da Call">${callLetter}</span>
                         <span class="timeline-week-text">${weekLabel}</span>
-                        <span class="timeline-option-put" title="Put">P</span>
+                        <span class="timeline-option-put" title="Código mensal da Put">${putLetter}</span>
                     </div>
                     <div class="timeline-date-text">${expiryDate.toLocaleDateString('pt-BR')}</div>
                     <div class="timeline-days">${daysToExpiry} dias</div>
