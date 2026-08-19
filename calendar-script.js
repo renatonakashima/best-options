@@ -31,7 +31,9 @@ function combineOperations() {
                 entryPrice: dashOp.entryPrice,
                 iv: dashOp.iv || 0,
                 notes: dashOp.notes || '',
-                closures: [],
+                closures: Array.isArray(dashOp.closures) ? dashOp.closures : [],
+                currentPrice: dashOp.currentPrice,
+                status: dashOp.status || 'open',
                 fromDashboard: true,
                 createdAt: dashOp.createdAt
             });
@@ -121,7 +123,7 @@ function closeAddExpiryModal() {
 
 // Modal de Encerramento
 function openClosePartialModal(operationId) {
-    const operation = allOperations.find(op => op.id === operationId);
+    const operation = allOperations.find(op => String(op.id) === String(operationId));
     if (!operation) return;
 
     const openQuantity = operation.quantity - (operation.closures?.reduce((sum, c) => sum + c.quantity, 0) || 0);
@@ -173,8 +175,8 @@ function addExpiryOperation(event) {
 function savePartialClose(event) {
     event.preventDefault();
 
-    const operationId = parseInt(document.getElementById('closeOperationId').value);
-    const operation = allOperations.find(op => op.id === operationId);
+    const rawOperationId = document.getElementById('closeOperationId').value;
+    const operation = allOperations.find(op => String(op.id) === String(rawOperationId));
 
     if (!operation) return;
 
@@ -182,36 +184,88 @@ function savePartialClose(event) {
     const closePrice = parseFloat(document.getElementById('closePrice').value);
     const closeDate = document.getElementById('closeDate').value;
 
-    // Validar quantidade
-    const openQuantity = operation.quantity - (operation.closures?.reduce((sum, c) => sum + c.quantity, 0) || 0);
+    if (!Number.isFinite(closeQuantity) || closeQuantity <= 0 || !Number.isFinite(closePrice) || !closeDate) {
+        alert('Informe quantidade, preço de saída e data válidos.');
+        return;
+    }
+
+    const closedQuantityBefore = (operation.closures || []).reduce((sum, c) => sum + Number(c.quantity || 0), 0);
+    const openQuantity = Number(operation.quantity || 0) - closedQuantityBefore;
     if (closeQuantity > openQuantity) {
         alert(`Quantidade inválida! Aberta: ${openQuantity.toFixed(2)}`);
         return;
     }
 
-    // Adicionar encerramento
-    if (!operation.closures) {
-        operation.closures = [];
-    }
+    if (!operation.closures) operation.closures = [];
+    operation.closures.push({ quantity: closeQuantity, price: closePrice, date: closeDate, timestamp: Date.now() });
 
-    operation.closures.push({
-        quantity: closeQuantity,
-        price: closePrice,
-        date: closeDate,
-        timestamp: Date.now()
-    });
+    const totalClosedQuantity = operation.closures.reduce((sum, c) => sum + Number(c.quantity || 0), 0);
+    const remainingQuantity = Number(operation.quantity || 0) - totalClosedQuantity;
 
     if (operation.fromDashboard) {
-        const dashOpIndex = dashboardOperations.findIndex(op => op.id === operation.id);
+        const dashOpIndex = dashboardOperations.findIndex(op => String(op.id) === String(operation.id));
         if (dashOpIndex !== -1) {
-            dashboardOperations[dashOpIndex].closures = operation.closures;
-            localStorage.setItem('operations', JSON.stringify(dashboardOperations));
-            if (useFirebase && typeof saveOperationToFirebase === 'function') {
-                saveOperationToFirebase(dashboardOperations[dashOpIndex]).catch(err => console.error('Erro ao salvar no Firebase:', err));
+            const sourceOperation = dashboardOperations[dashOpIndex];
+            sourceOperation.closures = operation.closures;
+
+            if (remainingQuantity <= 0) {
+                const closedItem = {
+                    ...sourceOperation,
+                    id: sourceOperation.id,
+                    operationType: sourceOperation.operationType || operation.type,
+                    status: 'closed',
+                    exitPrice: calculateAverageClosePrice(operation.closures),
+                    currentPrice: calculateAverageClosePrice(operation.closures),
+                    closeDate
+                };
+                closedOperations = [...(closedOperations || []), closedItem];
+                dashboardOperations.splice(dashOpIndex, 1);
+                localStorage.setItem('closedOperations', JSON.stringify(closedOperations));
+                localStorage.setItem('operations', JSON.stringify(dashboardOperations));
+                if (useFirebase && typeof saveClosedOperationToFirebase === 'function') {
+                    saveClosedOperationToFirebase(closedItem).catch(err => console.error('Erro ao salvar operação fechada no Firebase:', err));
+                }
+                if (useFirebase && typeof deleteOperationFromFirebase === 'function') {
+                    deleteOperationFromFirebase(sourceOperation.id).catch(err => console.error('Erro ao remover operação aberta do Firebase:', err));
+                }
+            } else {
+                localStorage.setItem('operations', JSON.stringify(dashboardOperations));
+                if (useFirebase && typeof saveOperationToFirebase === 'function') {
+                    saveOperationToFirebase(sourceOperation).catch(err => console.error('Erro ao atualizar operação do Dashboard no Firebase:', err));
+                }
             }
         }
     } else {
-        saveExpiryData();
+        const expiryOpIndex = expiryOperations.findIndex(op => String(op.id) === String(operation.id));
+        if (expiryOpIndex !== -1) expiryOperations[expiryOpIndex].closures = operation.closures;
+
+        if (remainingQuantity <= 0) {
+            const sourceOperation = expiryOpIndex !== -1 ? expiryOperations[expiryOpIndex] : operation;
+            const closeAverage = calculateAverageClosePrice(operation.closures);
+            const closedItem = {
+                ...sourceOperation,
+                operationType: sourceOperation.operationType || sourceOperation.type,
+                status: 'closed',
+                exitPrice: closeAverage,
+                currentPrice: closeAverage,
+                closeDate
+            };
+            closedOperations = [...(closedOperations || []), closedItem];
+            expiryOperations = expiryOperations.filter(op => String(op.id) !== String(operation.id));
+            localStorage.setItem('closedOperations', JSON.stringify(closedOperations));
+            saveExpiryData();
+            if (useFirebase && typeof saveClosedOperationToFirebase === 'function') {
+                saveClosedOperationToFirebase(closedItem).catch(err => console.error('Erro ao salvar operação de calendário fechada no Firebase:', err));
+            }
+            if (useFirebase && typeof deleteExpiryOperationFromFirebase === 'function') {
+                deleteExpiryOperationFromFirebase(operation.id).catch(err => console.error('Erro ao remover operação de calendário do Firebase:', err));
+            }
+        } else {
+            saveExpiryData();
+            if (useFirebase && typeof saveExpiryOperationToFirebase === 'function') {
+                saveExpiryOperationToFirebase(operation).catch(err => console.error('Erro ao atualizar operação do Calendário no Firebase:', err));
+            }
+        }
     }
 
     closeClosePartialModal();
@@ -221,17 +275,17 @@ function savePartialClose(event) {
 // Deletar operação
 function deleteExpiryOperation(operationId) {
     if (confirm('Tem certeza que deseja deletar esta operação?')) {
-        const operation = allOperations.find(op => op.id === operationId);
+        const operation = allOperations.find(op => String(op.id) === String(operationId));
         
         if (operation) {
             if (operation.fromDashboard) {
-                dashboardOperations = dashboardOperations.filter(op => op.id !== operationId);
+                dashboardOperations = dashboardOperations.filter(op => String(op.id) !== String(operationId));
                 localStorage.setItem('operations', JSON.stringify(dashboardOperations));
                 if (useFirebase && typeof deleteOperationFromFirebase === 'function') {
                     deleteOperationFromFirebase(operationId).catch(err => console.error('Erro ao deletar do Firebase:', err));
                 }
             } else {
-                expiryOperations = expiryOperations.filter(op => op.id !== operationId);
+                expiryOperations = expiryOperations.filter(op => String(op.id) !== String(operationId));
                 saveExpiryData();
                 
                 // Deletar do Firebase
@@ -247,12 +301,12 @@ function deleteExpiryOperation(operationId) {
 
 // Deletar encerramento
 function deleteClosureItem(operationId, timestamp) {
-    const operation = allOperations.find(op => op.id === operationId);
+    const operation = allOperations.find(op => String(op.id) === String(operationId));
     if (operation && operation.closures) {
         operation.closures = operation.closures.filter(c => c.timestamp !== timestamp);
         
         if (operation.fromDashboard) {
-            const dashOpIndex = dashboardOperations.findIndex(op => op.id === operation.id);
+            const dashOpIndex = dashboardOperations.findIndex(op => String(op.id) === String(operation.id));
             if (dashOpIndex !== -1) {
                 dashboardOperations[dashOpIndex].closures = operation.closures;
                 localStorage.setItem('operations', JSON.stringify(dashboardOperations));
