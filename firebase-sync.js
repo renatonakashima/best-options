@@ -7,7 +7,10 @@ async function loadOperationsFromFirebase() {
         const snapshot = await db.collection('operations').get();
         const ops = [];
         snapshot.forEach(doc => {
-            ops.push({ id: doc.id, ...doc.data() });
+            const data = doc.data();
+            // Documentos técnicos usados apenas para materializar as coleções não são operações.
+            if (doc.id === 'setup' || data?.system === 'initialization') return;
+            ops.push({ id: doc.id, ...data });
         });
         operations = ops;
         localStorage.setItem('operations', JSON.stringify(operations));
@@ -53,7 +56,10 @@ async function loadExpiryOperationsFromFirebase() {
         const snapshot = await db.collection('expiryOperations').get();
         const ops = [];
         snapshot.forEach(doc => {
-            ops.push({ id: doc.id, ...doc.data() });
+            const data = doc.data();
+            // Documentos técnicos usados apenas para materializar as coleções não são operações.
+            if (doc.id === 'setup' || data?.system === 'initialization') return;
+            ops.push({ id: doc.id, ...data });
         });
         expiryOperations = ops;
         localStorage.setItem('expiryOperations', JSON.stringify(expiryOperations));
@@ -99,7 +105,10 @@ async function loadClosedOperationsFromFirebase() {
         const snapshot = await db.collection('closedOperations').get();
         const ops = [];
         snapshot.forEach(doc => {
-            ops.push({ id: doc.id, ...doc.data() });
+            const data = doc.data();
+            // Documentos técnicos usados apenas para materializar as coleções não são operações.
+            if (doc.id === 'setup' || data?.system === 'initialization') return;
+            ops.push({ id: doc.id, ...data });
         });
         closedOperations = ops;
         localStorage.setItem('closedOperations', JSON.stringify(closedOperations));
