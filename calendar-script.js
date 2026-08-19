@@ -201,9 +201,16 @@ function savePartialClose(event) {
         timestamp: Date.now()
     });
 
-    // Se a operação é do dashboard, não salvar em expiryOperations
-    // Se é do calendário, salvar
-    if (!operation.fromDashboard) {
+    if (operation.fromDashboard) {
+        const dashOpIndex = dashboardOperations.findIndex(op => op.id === operation.id);
+        if (dashOpIndex !== -1) {
+            dashboardOperations[dashOpIndex].closures = operation.closures;
+            localStorage.setItem('operations', JSON.stringify(dashboardOperations));
+            if (useFirebase && typeof saveOperationToFirebase === 'function') {
+                saveOperationToFirebase(dashboardOperations[dashOpIndex]).catch(err => console.error('Erro ao salvar no Firebase:', err));
+            }
+        }
+    } else {
         saveExpiryData();
     }
 
@@ -216,13 +223,21 @@ function deleteExpiryOperation(operationId) {
     if (confirm('Tem certeza que deseja deletar esta operação?')) {
         const operation = allOperations.find(op => op.id === operationId);
         
-        if (operation && !operation.fromDashboard) {
-            expiryOperations = expiryOperations.filter(op => op.id !== operationId);
-            saveExpiryData();
-            
-            // Deletar do Firebase
-            if (useFirebase && typeof deleteExpiryOperationFromFirebase === 'function') {
-                deleteExpiryOperationFromFirebase(operationId).catch(err => console.error('Erro ao deletar do Firebase:', err));
+        if (operation) {
+            if (operation.fromDashboard) {
+                dashboardOperations = dashboardOperations.filter(op => op.id !== operationId);
+                localStorage.setItem('operations', JSON.stringify(dashboardOperations));
+                if (useFirebase && typeof deleteOperationFromFirebase === 'function') {
+                    deleteOperationFromFirebase(operationId).catch(err => console.error('Erro ao deletar do Firebase:', err));
+                }
+            } else {
+                expiryOperations = expiryOperations.filter(op => op.id !== operationId);
+                saveExpiryData();
+                
+                // Deletar do Firebase
+                if (useFirebase && typeof deleteExpiryOperationFromFirebase === 'function') {
+                    deleteExpiryOperationFromFirebase(operationId).catch(err => console.error('Erro ao deletar do Firebase:', err));
+                }
             }
         }
         
@@ -236,7 +251,16 @@ function deleteClosureItem(operationId, timestamp) {
     if (operation && operation.closures) {
         operation.closures = operation.closures.filter(c => c.timestamp !== timestamp);
         
-        if (!operation.fromDashboard) {
+        if (operation.fromDashboard) {
+            const dashOpIndex = dashboardOperations.findIndex(op => op.id === operation.id);
+            if (dashOpIndex !== -1) {
+                dashboardOperations[dashOpIndex].closures = operation.closures;
+                localStorage.setItem('operations', JSON.stringify(dashboardOperations));
+                if (useFirebase && typeof saveOperationToFirebase === 'function') {
+                    saveOperationToFirebase(dashboardOperations[dashOpIndex]).catch(err => console.error('Erro ao salvar no Firebase:', err));
+                }
+            }
+        } else {
             saveExpiryData();
         }
         
