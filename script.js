@@ -28,7 +28,29 @@ function closeAddOperationModal() {
 
 // Modal de Edição
 function openEditModal(id) {
-    const operation = operations.find(op => op.id === id);
+    let operation = operations.find(op => op.id === id);
+    if (!operation) {
+        const calendarOperations = JSON.parse(localStorage.getItem('expiryOperations')) || [];
+        const calOp = calendarOperations.find(op => op.id === id);
+        if (calOp) {
+            operation = {
+                id: calOp.id,
+                asset: calOp.asset,
+                strike: calOp.strike,
+                operationType: calOp.type,
+                quantity: calOp.quantity,
+                entryPrice: calOp.entryPrice,
+                currentPrice: calOp.currentPrice !== undefined ? calOp.currentPrice : calOp.entryPrice,
+                expiryDate: calOp.expiryDate,
+                iv: calOp.iv || 0,
+                delta: 0,
+                theta: 0,
+                notes: calOp.notes || '',
+                status: 'open',
+                fromCalendar: true
+            };
+        }
+    }
     if (!operation) return;
 
     document.getElementById('editId').value = id;
@@ -84,7 +106,14 @@ function saveEditedOperation(event) {
     event.preventDefault();
 
     const id = parseInt(document.getElementById('editId').value);
-    const operation = operations.find(op => op.id === id);
+    let operation = operations.find(op => op.id === id);
+    let isCalendarOp = false;
+
+    if (!operation) {
+        const calendarOperations = JSON.parse(localStorage.getItem('expiryOperations')) || [];
+        operation = calendarOperations.find(op => op.id === id);
+        isCalendarOp = true;
+    }
 
     if (operation) {
         operation.currentPrice = parseFloat(document.getElementById('editCurrentPrice').value);
@@ -94,21 +123,63 @@ function saveEditedOperation(event) {
             operation.exitPrice = parseFloat(document.getElementById('editExitPrice').value) || operation.currentPrice;
             operation.closeDate = document.getElementById('editCloseDate').value || new Date().toISOString().split('T')[0];
 
-            // Mover para histórico
-            closedOperations.push(operation);
-            operations = operations.filter(op => op.id !== id);
-            
-            // Salvar no Firebase
-            if (useFirebase && typeof saveClosedOperationToFirebase === 'function') {
-                saveClosedOperationToFirebase(operation).catch(err => console.error('Erro ao salvar no Firebase:', err));
-            }
-            if (useFirebase && typeof deleteOperationFromFirebase === 'function') {
-                deleteOperationFromFirebase(id).catch(err => console.error('Erro ao deletar do Firebase:', err));
+            if (isCalendarOp) {
+                const closedItem = {
+                    id: operation.id,
+                    asset: operation.asset,
+                    strike: operation.strike,
+                    operationType: operation.type || operation.operationType,
+                    quantity: operation.quantity,
+                    entryPrice: operation.entryPrice,
+                    currentPrice: operation.currentPrice,
+                    exitPrice: operation.exitPrice,
+                    expiryDate: operation.expiryDate,
+                    iv: operation.iv || 0,
+                    delta: 0,
+                    theta: 0,
+                    notes: operation.notes || '',
+                    status: operation.status,
+                    closeDate: operation.closeDate,
+                    createdAt: operation.createdAt || new Date().toISOString()
+                };
+                closedOperations.push(closedItem);
+
+                let calendarOperations = JSON.parse(localStorage.getItem('expiryOperations')) || [];
+                calendarOperations = calendarOperations.filter(op => op.id !== id);
+                localStorage.setItem('expiryOperations', JSON.stringify(calendarOperations));
+
+                if (useFirebase && typeof saveClosedOperationToFirebase === 'function') {
+                    saveClosedOperationToFirebase(closedItem).catch(err => console.error('Erro ao salvar no Firebase:', err));
+                }
+                if (useFirebase && typeof deleteExpiryOperationFromFirebase === 'function') {
+                    deleteExpiryOperationFromFirebase(id).catch(err => console.error('Erro ao deletar do Firebase:', err));
+                }
+            } else {
+                closedOperations.push(operation);
+                operations = operations.filter(op => op.id !== id);
+
+                if (useFirebase && typeof saveClosedOperationToFirebase === 'function') {
+                    saveClosedOperationToFirebase(operation).catch(err => console.error('Erro ao salvar no Firebase:', err));
+                }
+                if (useFirebase && typeof deleteOperationFromFirebase === 'function') {
+                    deleteOperationFromFirebase(id).catch(err => console.error('Erro ao deletar do Firebase:', err));
+                }
             }
         } else {
-            // Atualizar no Firebase
-            if (useFirebase && typeof saveOperationToFirebase === 'function') {
-                saveOperationToFirebase(operation).catch(err => console.error('Erro ao salvar no Firebase:', err));
+            if (isCalendarOp) {
+                let calendarOperations = JSON.parse(localStorage.getItem('expiryOperations')) || [];
+                const idx = calendarOperations.findIndex(op => op.id === id);
+                if (idx !== -1) {
+                    calendarOperations[idx].currentPrice = operation.currentPrice;
+                    localStorage.setItem('expiryOperations', JSON.stringify(calendarOperations));
+                    if (useFirebase && typeof saveExpiryOperationToFirebase === 'function') {
+                        saveExpiryOperationToFirebase(calendarOperations[idx]).catch(err => console.error('Erro ao salvar no Firebase:', err));
+                    }
+                }
+            } else {
+                if (useFirebase && typeof saveOperationToFirebase === 'function') {
+                    saveOperationToFirebase(operation).catch(err => console.error('Erro ao salvar no Firebase:', err));
+                }
             }
         }
 
@@ -155,13 +226,14 @@ function renderPositions() {
             operationType: op.type,
             quantity: op.quantity,
             entryPrice: op.entryPrice,
-            currentPrice: op.entryPrice,
+            currentPrice: op.currentPrice !== undefined ? op.currentPrice : op.entryPrice,
             expiryDate: op.expiryDate,
             iv: op.iv || 0,
             delta: 0,
             theta: 0,
             notes: op.notes || '',
-            fromCalendar: true
+            fromCalendar: true,
+            closures: op.closures || []
         }))
     ];
 
