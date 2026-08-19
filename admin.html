@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo - Best Options</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .admin-container { max-width: 1200px; margin: 40px auto; padding: 20px; }
+        .admin-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: var(--shadow); }
+        .user-select-row { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+        .user-select-row select { padding: 10px 16px; border-radius: 8px; background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); font-size: 15px; min-width: 280px; }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Header -->
+        <header class="header" style="margin-bottom: 30px;">
+            <div class="header-content">
+                <h1>👑 Painel do Administrador</h1>
+                <p class="subtitle">Consulta de Operações por Usuário</p>
+            </div>
+            <div class="header-actions">
+                <a href="index.html" class="btn btn-secondary">← Voltar ao Dashboard</a>
+            </div>
+        </header>
+
+        <!-- Seletor de Usuário -->
+        <div class="admin-card">
+            <h2>Selecione o Usuário</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 14px;">Escolha um usuário cadastrado no sistema para auditar e visualizar as posições abertas e o histórico.</p>
+            <div class="user-select-row">
+                <select id="targetUserSelect" onchange="loadUserData()">
+                    <option value="">Carregando usuários...</option>
+                </select>
+                <button class="btn btn-primary" onclick="loadUserData()">Atualizar Consulta</button>
+            </div>
+            <div id="selectedUserInfo" style="font-size: 14px; color: var(--text-secondary);"></div>
+        </div>
+
+        <!-- Seção de Posições do Usuário Selecionado -->
+        <div class="admin-card">
+            <h2 id="sectionUserTitle">Posições Abertas do Usuário</h2>
+            <div id="adminPositionsGrid" class="operations-grid" style="margin-top: 20px;">
+                <p style="color: var(--text-secondary);">Nenhum usuário selecionado ou sem operações.</p>
+            </div>
+        </div>
+
+        <!-- Seção de Histórico do Usuário Selecionado -->
+        <div class="admin-card">
+            <h2>Histórico de Operações Fechadas</h2>
+            <div class="table-container" style="margin-top: 20px;">
+                <table class="history-table" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--border-color); text-align: left; color: var(--text-secondary);">
+                            <th style="padding: 12px;">Data</th>
+                            <th style="padding: 12px;">Ativo</th>
+                            <th style="padding: 12px;">Tipo</th>
+                            <th style="padding: 12px;">Contrato</th>
+                            <th style="padding: 12px;">Qtd</th>
+                            <th style="padding: 12px;">Entrada</th>
+                            <th style="padding: 12px;">Saída</th>
+                            <th style="padding: 12px;">P&L</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminHistoryBody">
+                        <tr>
+                            <td colspan="8" style="padding: 20px; text-align: center; color: var(--text-secondary);">Selecione um usuário para visualizar o histórico.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    
+    <!-- Firebase Configuration & Auth -->
+    <script src="firebase-config.js"></script>
+    <script src="auth.js"></script>
+
+    <script>
+        let allUsersMap = {};
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initAuth(async (user) => {
+                if (!user.isAdmin) {
+                    alert('Acesso negado. Apenas o administrador possui permissão para acessar esta página.');
+                    window.location.href = 'index.html';
+                    return;
+                }
+                await scanAllUsers();
+            });
+        });
+
+        // Escanear todas as coleções para listar usuários únicos
+        async function scanAllUsers() {
+            try {
+                const select = document.getElementById('targetUserSelect');
+                select.innerHTML = '<option value="">Selecione um usuário...</option>';
+                allUsersMap = {};
+
+                const collections = ['operations', 'expiryOperations', 'closedOperations'];
+                for (const colName of collections) {
+                    const snapshot = await db.collection(colName).get();
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        if (doc.id === 'setup' || data?.system === 'initialization') return;
+                        const uid = data.userId || 'public_guest';
+                        if (!allUsersMap[uid]) {
+                            allUsersMap[uid] = {
+                                uid: uid,
+                                email: data.userEmail || data.userName || `Usuário (${uid.substring(0, 8)}...)`,
+                                count: 0
+                            };
+                        }
+                        allUsersMap[uid].count++;
+                    });
+                }
+
+                const users = Object.values(allUsersMap);
+                if (users.length === 0) {
+                    select.innerHTML = '<option value="">Nenhum usuário encontrado no banco</option>';
+                    return;
+                }
+
+                users.forEach(u => {
+                    const opt = document.createElement('option');
+                    opt.value = u.uid;
+                    opt.textContent = `${u.email} (${u.count} registros)`;
+                    select.appendChild(opt);
+                });
+
+            } catch (error) {
+                console.error('Erro ao escanear usuários:', error);
+                alert('Erro ao carregar lista de usuários.');
+            }
+        }
+
+        // Carregar dados do usuário selecionado
+        async function loadUserData() {
+            const uid = document.getElementById('targetUserSelect').value;
+            if (!uid) return;
+
+            document.getElementById('selectedUserInfo').textContent = `ID do Usuário: ${uid}`;
+            document.getElementById('sectionUserTitle').textContent = `Posições Abertas (${allUsersMap[uid]?.email || uid})`;
+
+            try {
+                // Carregar operations do usuário
+                const opsSnap = await db.collection('operations').where('userId', '==', uid).get();
+                const expirySnap = await db.collection('expiryOperations').where('userId', '==', uid).get();
+                const closedSnap = await db.collection('closedOperations').where('userId', '==', uid).get();
+
+                const openOps = [];
+                opsSnap.forEach(d => openOps.push({ id: d.id, ...d.data() }));
+                expirySnap.forEach(d => {
+                    const data = d.data();
+                    if (!openOps.some(o => o.id === data.id)) openOps.push({ id: d.id, ...data });
+                });
+
+                renderAdminPositions(openOps);
+
+                const closedOps = [];
+                closedSnap.forEach(d => closedOps.push({ id: d.id, ...d.data() }));
+                renderAdminHistory(closedOps);
+
+            } catch (error) {
+                console.error('Erro ao carregar dados do usuário:', error);
+                alert('Erro ao consultar operações do usuário.');
+            }
+        }
+
+        function renderAdminPositions(ops) {
+            const grid = document.getElementById('adminPositionsGrid');
+            if (!ops || ops.length === 0) {
+                grid.innerHTML = '<p style="color: var(--text-secondary); grid-column: 1/-1;">Nenhuma posição aberta encontrada para este usuário.</p>';
+                return;
+            }
+
+            grid.innerHTML = ops.map(op => {
+                const tipoMap = { 'call': 'Call Comprada', 'put': 'Put Comprada', 'call-sold': 'Call Vendida', 'put-sold': 'Put Vendida' };
+                const tipoTexto = tipoMap[op.operationType] || op.operationType;
+                return `
+                    <div class="operation-card" style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 10px; padding: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h3 style="font-size: 16px; font-weight: 600;">${op.asset}</h3>
+                            <span style="font-size: 11px; background: #334155; padding: 2px 8px; border-radius: 4px;">${tipoTexto}</span>
+                        </div>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 6px;">Strike: <strong>R$ ${Number(op.strike).toFixed(2)}</strong></p>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 6px;">Quantidade: <strong>${op.quantity}</strong></p>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 6px;">Entrada: <strong>R$ ${Number(op.entryPrice).toFixed(2)}</strong></p>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 10px;">Vencimento: <strong>${op.expiryDate}</strong></p>
+                        <div style="background: rgba(59, 130, 246, 0.1); padding: 8px; border-radius: 6px; text-align: center; font-weight: 600; color: #3b82f6;">
+                            Aberta
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderAdminHistory(ops) {
+            const tbody = document.getElementById('adminHistoryBody');
+            if (!ops || ops.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="padding: 20px; text-align: center; color: var(--text-secondary);">Nenhum histórico de operações fechadas para este usuário.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = ops.map(op => {
+                const tipoMap = { 'call': 'Call Comprada', 'put': 'Put Comprada', 'call-sold': 'Call Vendida', 'put-sold': 'Put Vendida' };
+                const tipoTexto = tipoMap[op.operationType] || op.operationType;
+                const totalPl = op.closures ? op.closures.reduce((acc, c) => acc + ((c.price - op.entryPrice) * c.quantity * (op.operationType.includes('sold') ? -1 : 1)), 0) : 0;
+                const plColor = totalPl >= 0 ? '#10b981' : '#ef4444';
+                return `
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 12px;">${op.closeDate || '-'}</td>
+                        <td style="padding: 12px; font-weight: 600;">${op.asset}</td>
+                        <td style="padding: 12px;">${tipoTexto}</td>
+                        <td style="padding: 12px;">Strike ${Number(op.strike).toFixed(2)}</td>
+                        <td style="padding: 12px;">${op.quantity}</td>
+                        <td style="padding: 12px;">R$ ${Number(op.entryPrice).toFixed(2)}</td>
+                        <td style="padding: 12px;">R$ ${Number(op.exitPrice || 0).toFixed(2)}</td>
+                        <td style="padding: 12px; font-weight: 600; color: ${plColor};">${totalPl >= 0 ? '+' : ''}R$ ${totalPl.toFixed(2)}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+    </script>
+</body>
+</html>

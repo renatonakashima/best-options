@@ -1,20 +1,29 @@
-// Firebase Synchronization Module
+// Módulo de Sincronização com Firebase Firestore e Isolamento por Usuário
 let useFirebase = true;
 
-// Carregar operações do Firestore
+// Obter ID do usuário atual ou fallback
+function getEffectiveUserId() {
+    if (typeof currentUser !== 'undefined' && currentUser && currentUser.uid) {
+        return currentUser.uid;
+    }
+    // Fallback temporário antes do auth carregar
+    return 'public_guest';
+}
+
+// Carregar operações do Firestore para o usuário atual
 async function loadOperationsFromFirebase() {
     try {
-        const snapshot = await db.collection('operations').get();
+        const uid = getEffectiveUserId();
+        const snapshot = await db.collection('operations').where('userId', '==', uid).get();
         const ops = [];
         snapshot.forEach(doc => {
             const data = doc.data();
-            // Documentos técnicos usados apenas para materializar as coleções não são operações.
             if (doc.id === 'setup' || data?.system === 'initialization') return;
             ops.push({ id: doc.id, ...data });
         });
         operations = ops;
         localStorage.setItem('operations', JSON.stringify(operations));
-        console.log('Operações carregadas do Firebase:', operations.length);
+        console.log('Operações carregadas do Firebase para usuário:', uid, operations.length);
         return operations;
     } catch (error) {
         console.error('Erro ao carregar operações do Firebase:', error);
@@ -23,9 +32,11 @@ async function loadOperationsFromFirebase() {
     }
 }
 
-// Salvar operação no Firestore
+// Salvar operação no Firestore com userId
 async function saveOperationToFirebase(operation) {
     try {
+        const uid = getEffectiveUserId();
+        operation.userId = uid;
         if (!operation.id) {
             operation.id = db.collection('operations').doc().id;
         }
@@ -50,14 +61,14 @@ async function deleteOperationFromFirebase(operationId) {
     }
 }
 
-// Carregar operações do calendário do Firestore
+// Carregar operações de calendário do Firestore para o usuário atual
 async function loadExpiryOperationsFromFirebase() {
     try {
-        const snapshot = await db.collection('expiryOperations').get();
+        const uid = getEffectiveUserId();
+        const snapshot = await db.collection('expiryOperations').where('userId', '==', uid).get();
         const ops = [];
         snapshot.forEach(doc => {
             const data = doc.data();
-            // Documentos técnicos usados apenas para materializar as coleções não são operações.
             if (doc.id === 'setup' || data?.system === 'initialization') return;
             ops.push({ id: doc.id, ...data });
         });
@@ -72,9 +83,11 @@ async function loadExpiryOperationsFromFirebase() {
     }
 }
 
-// Salvar operação de calendário no Firestore
+// Salvar operação de calendário no Firestore com userId
 async function saveExpiryOperationToFirebase(operation) {
     try {
+        const uid = getEffectiveUserId();
+        operation.userId = uid;
         if (!operation.id) {
             operation.id = db.collection('expiryOperations').doc().id;
         }
@@ -99,14 +112,14 @@ async function deleteExpiryOperationFromFirebase(operationId) {
     }
 }
 
-// Carregar operações fechadas do Firestore
+// Carregar operações fechadas do Firestore para o usuário atual
 async function loadClosedOperationsFromFirebase() {
     try {
-        const snapshot = await db.collection('closedOperations').get();
+        const uid = getEffectiveUserId();
+        const snapshot = await db.collection('closedOperations').where('userId', '==', uid).get();
         const ops = [];
         snapshot.forEach(doc => {
             const data = doc.data();
-            // Documentos técnicos usados apenas para materializar as coleções não são operações.
             if (doc.id === 'setup' || data?.system === 'initialization') return;
             ops.push({ id: doc.id, ...data });
         });
@@ -121,9 +134,11 @@ async function loadClosedOperationsFromFirebase() {
     }
 }
 
-// Salvar operação fechada no Firestore
+// Salvar operação fechada no Firestore com userId
 async function saveClosedOperationToFirebase(operation) {
     try {
+        const uid = getEffectiveUserId();
+        operation.userId = uid;
         if (!operation.id) {
             operation.id = db.collection('closedOperations').doc().id;
         }
@@ -136,9 +151,9 @@ async function saveClosedOperationToFirebase(operation) {
     }
 }
 
-// Sincronizar dados ao carregar a página
+// Sincronizar dados do usuário ao carregar
 async function syncAllDataFromFirebase() {
-    console.log('Sincronizando dados do Firebase...');
+    console.log('Sincronizando dados do Firebase para usuário:', getEffectiveUserId());
     try {
         await Promise.all([
             loadOperationsFromFirebase(),
@@ -146,6 +161,10 @@ async function syncAllDataFromFirebase() {
             loadClosedOperationsFromFirebase()
         ]);
         console.log('Sincronização completa!');
+        // Atualizar renderizações se as funções existirem na página
+        if (typeof renderPositions === 'function') renderPositions();
+        if (typeof renderHistory === 'function') renderHistory();
+        if (typeof renderTimeline === 'function') renderTimeline();
         return true;
     } catch (error) {
         console.error('Erro durante sincronização:', error);
@@ -153,11 +172,21 @@ async function syncAllDataFromFirebase() {
     }
 }
 
-// Sincronizar dados ao carregar a página
-document.addEventListener('DOMContentLoaded', async () => {
-    if (useFirebase && typeof db !== 'undefined') {
-        await syncAllDataFromFirebase();
+// Inicializar autenticação e sincronização ao carregar o DOM
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof initAuth === 'function') {
+        initAuth(async (user) => {
+            if (useFirebase && typeof db !== 'undefined') {
+                await syncAllDataFromFirebase();
+            }
+        });
+    } else {
+        setTimeout(async () => {
+            if (useFirebase && typeof db !== 'undefined') {
+                await syncAllDataFromFirebase();
+            }
+        }, 500);
     }
 });
 
-console.log('Firebase Sync module loaded');
+console.log('Firebase Sync module with user isolation loaded');
