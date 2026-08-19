@@ -10,6 +10,15 @@ function initAuth(onAuthReady) {
         return;
     }
 
+    // Verificar se retornou de redirect do Google
+    firebase.auth().getRedirectResult().then((result) => {
+        if (result && result.user) {
+            console.log('Login via redirect bem-sucedido:', result.user.email);
+        }
+    }).catch((error) => {
+        console.error('Erro no redirect do Google:', error);
+    });
+
     firebase.auth().onAuthStateChanged(async (user) => {
         if (user) {
             currentUser = {
@@ -33,14 +42,19 @@ function initAuth(onAuthReady) {
     });
 }
 
-// Entrar com Google
+// Entrar com Google (Tenta popup, se falhar ou bloquear, usa redirect)
 async function loginWithGoogle() {
     const provider = new firebase.auth.GoogleAuthProvider();
     try {
         await firebase.auth().signInWithPopup(provider);
     } catch (error) {
-        console.error('Erro no login com Google:', error);
-        alert('Erro ao autenticar com o Google: ' + error.message);
+        console.warn('Popup bloqueada ou falhou, tentando login com redirect...', error);
+        try {
+            await firebase.auth().signInWithRedirect(provider);
+        } catch (redirectError) {
+            console.error('Erro no login com Google (Redirect):', redirectError);
+            alert('Erro ao autenticar com o Google: ' + redirectError.message);
+        }
     }
 }
 
@@ -66,7 +80,7 @@ function showAuthModal() {
             display: flex; justify-content: center; align-items: center; z-index: 99999;
         `;
         modal.innerHTML = `
-            <div style="background: #1e293b; padding: 40px; border-radius: 16px; width: 100%; max-width: 420px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,00,0,0.5); border: 1px solid #334155; color: #f8fafc;">
+            <div style="background: #1e293b; padding: 40px; border-radius: 16px; width: 100%; max-width: 420px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); border: 1px solid #334155; color: #f8fafc;">
                 <h2 style="margin-bottom: 12px; font-size: 24px; font-weight: 700;">📊 Best Options</h2>
                 <p style="color: #94a3b8; margin-bottom: 30px; font-size: 14px;">Faça login com sua conta Google para acessar suas operações com segurança na nuvem.</p>
                 <button onclick="loginWithGoogle()" style="width: 100%; background: #ffffff; color: #1e293b; border: none; padding: 14px; border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); transition: background 0.2s;">
