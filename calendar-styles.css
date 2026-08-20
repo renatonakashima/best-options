@@ -32,11 +32,11 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.timeline-arrow.scroll-left {
+.timeline-arrow-left {
     left: 20px;
 }
 
-.timeline-arrow.scroll-right {
+.timeline-arrow-right {
     right: 20px;
 }
 
