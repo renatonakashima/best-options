@@ -15,9 +15,12 @@
                 <h1>📅 Calendário de Vencimentos</h1>
                 <p class="subtitle">Linha do Tempo de Operações com Opções</p>
             </div>
-            <div class="header-actions">
-                <button class="btn btn-primary" onclick="openAddExpiryModal()">+ Adicionar Operação</button>
-                <a href="index.html" class="btn btn-secondary">← Voltar ao Dashboard</a>
+            <div class="header-actions" style="flex-direction: column; align-items: flex-end; gap: 8px;">
+                <!-- O badge do usuário é injetado aqui em cima pelo auth.js -->
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button class="btn btn-primary" onclick="openAddExpiryModal()">+ Adicionar Operação</button>
+                    <a href="index.html" class="btn btn-secondary">← Voltar ao Dashboard</a>
+                </div>
             </div>
         </header>
 
