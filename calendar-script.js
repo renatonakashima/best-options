@@ -507,6 +507,36 @@ function renderTimeline() {
     }).join('');
 
     timeline.innerHTML = timelineItems;
+
+    // Rolar automaticamente para o vencimento mais próximo (data atual ou futura mais próxima)
+    setTimeout(() => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const timelineContainer = document.querySelector('.timeline-container');
+        const items = timeline.querySelectorAll('.timeline-item');
+        
+        let targetItem = null;
+        let minDiff = Infinity;
+
+        b3Dates.forEach((b3Date, idx) => {
+            const diff = b3Date.date - today;
+            // Procurar a data de hoje ou a mais próxima no futuro; se não houver, a última passada
+            if (diff >= 0 && diff < minDiff) {
+                minDiff = diff;
+                targetItem = items[idx];
+            }
+        });
+
+        // Se todas as datas forem passadas, pega a última
+        if (!targetItem && items.length > 0) {
+            targetItem = items[items.length - 1];
+        }
+
+        if (targetItem && timelineContainer) {
+            const scrollLeftPos = targetItem.offsetLeft - (timelineContainer.clientWidth / 2) + (targetItem.clientWidth / 2);
+            timelineContainer.scrollTo({ left: scrollLeftPos, behavior: 'smooth' });
+        }
+    }, 100);
 }
 
 // Função auxiliar
