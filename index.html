@@ -106,6 +106,26 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Resumo Detalhado por Tipo de Operação -->
+                <div class="card" style="margin-top: 20px;">
+                    <h3>Resumo de Operações por Tipo e Alocação</h3>
+                    <div style="overflow-x: auto; margin-top: 15px;">
+                        <table class="table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">
+                                    <th style="padding: 10px;">Tipo de Operação</th>
+                                    <th style="padding: 10px;">Quantidade Total</th>
+                                    <th style="padding: 10px;">Valor Alocado</th>
+                                    <th style="padding: 10px;">Rational / Composição</th>
+                                </tr>
+                            </thead>
+                            <tbody id="analyticsTypeSummaryTable">
+                                <!-- Preenchido dinamicamente por script.js -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

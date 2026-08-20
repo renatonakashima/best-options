@@ -434,6 +434,97 @@ function updateAnalytics() {
     document.getElementById('avgDelta').textContent = avgDelta;
     document.getElementById('avgTheta').textContent = avgTheta;
     document.getElementById('avgVolatility').textContent = `${avgIV}%`;
+
+    // Resumo por tipo de operação (Call Comprada, Call Vendida, Put Comprada, Put Vendida)
+    const typesConfig = [
+        { key: 'call', label: 'Call Comprada', isSold: false },
+        { key: 'call-sold', label: 'Call Vendida', isSold: true },
+        { key: 'put', label: 'Put Comprada', isSold: false },
+        { key: 'put-sold', label: 'Put Vendida', isSold: true }
+    ];
+
+    // Combinar operações abertas do dashboard, calendário e fechadas para abranger todo o histórico / carteira
+    const calendarOperations = JSON.parse(localStorage.getItem('expiryOperations')) || [];
+    const allKnownOperations = [
+        ...operations,
+        ...closedOperations,
+        ...calendarOperations.map(calOp => ({
+            id: calOp.id,
+            asset: calOp.asset,
+            operationType: calOp.type || calOp.operationType,
+            strike: calOp.strike,
+            quantity: calOp.quantity,
+            entryPrice: calOp.entryPrice,
+            currentPrice: calOp.currentPrice || calOp.entryPrice,
+            notes: calOp.notes || ''
+        }))
+    ];
+
+    let grandTotalQuantity = 0;
+    let grandTotalAllocated = 0;
+
+    const summaryRowsHTML = typesConfig.map(cfg => {
+        const matchingOps = allKnownOperations.filter(op => {
+            const opType = (op.operationType || op.type || '').toLowerCase();
+            return opType === cfg.key;
+        });
+
+        let totalQty = 0;
+        let totalAllocated = 0;
+        let rationalParts = [];
+
+        matchingOps.forEach(op => {
+            const qty = Number(op.quantity || 0);
+            const price = Number(op.currentPrice !== undefined ? op.currentPrice : (op.entryPrice || 0));
+            const allocated = qty * price;
+
+            totalQty += qty;
+            totalAllocated += allocated;
+            if (op.asset) {
+                rationalParts.push(`${op.asset} (Qtd: ${qty}, Strike: R$ ${Number(op.strike || 0).toFixed(2)})`);
+            }
+        });
+
+        // Compradas são positivas, vendidas são negativas
+        const signedQty = cfg.isSold ? -totalQty : totalQty;
+        const signedAllocated = cfg.isSold ? -totalAllocated : totalAllocated;
+
+        grandTotalQuantity += signedQty;
+        grandTotalAllocated += signedAllocated;
+
+        const qtyDisplay = cfg.isSold ? `-${Math.abs(signedQty).toFixed(2)}` : `${Math.abs(signedQty).toFixed(2)}`;
+        const allocatedColor = signedAllocated >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+        const allocatedDisplay = `${signedAllocated >= 0 ? '+' : ''}R$ ${Math.abs(signedAllocated).toFixed(2)}`;
+        const rationalText = rationalParts.length > 0 ? rationalParts.join(' | ') : 'Nenhuma operação cadastrada';
+
+        return `
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 12px; font-weight: 600;">${cfg.label}</td>
+                <td style="padding: 12px;">${qtyDisplay}</td>
+                <td style="padding: 12px; color: ${allocatedColor}; font-weight: 600;">${allocatedDisplay}</td>
+                <td style="padding: 12px; font-size: 0.85rem; color: var(--text-secondary);">${rationalText}</td>
+            </tr>
+        `;
+    }).join('');
+
+    // Linha de Total Geral de Todas as Operações
+    const grandAllocatedColor = grandTotalAllocated >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+    const grandAllocatedDisplay = `${grandTotalAllocated >= 0 ? '+' : ''}R$ ${Math.abs(grandTotalAllocated).toFixed(2)}`;
+    const grandQtyDisplay = `${grandTotalQuantity >= 0 ? '+' : ''}${grandTotalQuantity.toFixed(2)}`;
+
+    const grandTotalRowHTML = `
+        <tr style="background: rgba(59, 130, 246, 0.08); font-weight: bold; border-top: 2px solid var(--border-color);">
+            <td style="padding: 14px; color: var(--primary-color);">VALOR TOTAL DE TODAS AS OPERAÇÕES</td>
+            <td style="padding: 14px;">${grandQtyDisplay}</td>
+            <td style="padding: 14px; color: ${grandAllocatedColor}; font-size: 1.05rem;">${grandAllocatedDisplay}</td>
+            <td style="padding: 14px; font-size: 0.85rem; color: var(--text-secondary);">Consolidado Geral (Compradas positivas, Vendidas negativas)</td>
+        </tr>
+    `;
+
+    const summaryTableElement = document.getElementById('analyticsTypeSummaryTable');
+    if (summaryTableElement) {
+        summaryTableElement.innerHTML = summaryRowsHTML + grandTotalRowHTML;
+    }
 }
 
 // Funções auxiliares
