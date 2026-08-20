@@ -508,7 +508,7 @@ function renderTimeline() {
 
     timeline.innerHTML = timelineItems;
 
-    // Rolar automaticamente para o vencimento mais próximo (data atual ou futura mais próxima)
+    // Rolar automaticamente: prioriza data futura (>= atual) com operação cadastrada; senão, data mais próxima da atual
     setTimeout(() => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -516,18 +516,34 @@ function renderTimeline() {
         const items = timeline.querySelectorAll('.timeline-item');
         
         let targetItem = null;
-        let minDiff = Infinity;
+        let minDiffFutureWithOp = Infinity;
+        let minDiffAny = Infinity;
+        let fallbackItem = null;
 
         b3Dates.forEach((b3Date, idx) => {
+            const dateStr = b3Date.date.toISOString().split('T')[0];
+            const hasOperations = operationsByDate[dateStr] && operationsByDate[dateStr].length > 0;
             const diff = b3Date.date - today;
-            // Procurar a data de hoje ou a mais próxima no futuro; se não houver, a última passada
-            if (diff >= 0 && diff < minDiff) {
-                minDiff = diff;
+
+            // 1. Procurar data futura (ou hoje) que tenha operação cadastrada mais próxima
+            if (diff >= 0 && hasOperations && diff < minDiffFutureWithOp) {
+                minDiffFutureWithOp = diff;
                 targetItem = items[idx];
+            }
+
+            // 2. Fallback geral: data mais próxima da atual (>= atual)
+            if (diff >= 0 && diff < minDiffAny) {
+                minDiffAny = diff;
+                fallbackItem = items[idx];
             }
         });
 
-        // Se todas as datas forem passadas, pega a última
+        // Se não encontrou nenhuma data futura com operação, usa o fallback (data mais próxima >= atual)
+        if (!targetItem) {
+            targetItem = fallbackItem;
+        }
+
+        // Se ainda não houver (ex: todas passadas), pega a última
         if (!targetItem && items.length > 0) {
             targetItem = items[items.length - 1];
         }
