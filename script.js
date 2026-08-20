@@ -535,6 +535,122 @@ function updateAnalytics() {
     if (summaryTableElement) {
         summaryTableElement.innerHTML = summaryRowsHTML + grandTotalRowHTML;
     }
+
+    // Renderizar gráfico de evolução patrimonial mensal
+    renderPatrimonyChart(allKnownOperations);
+}
+
+let patrimonyChartInstance = null;
+
+function renderPatrimonyChart(allKnownOps) {
+    const ctx = document.getElementById('patrimonyChart');
+    if (!ctx) return;
+
+    // Agrupar operações por mês (baseado em createdAt ou expiryDate)
+    const monthlyData = {};
+
+    allKnownOps.forEach(op => {
+        let dateStr = op.createdAt || op.expiryDate || new Date().toISOString();
+        let date = new Date(dateStr);
+        if (isNaN(date)) date = new Date();
+
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        
+        if (!monthlyData[monthKey]) {
+            monthlyData[monthKey] = { invested: 0, pnl: 0 };
+        }
+
+        const qty = Number(op.quantity || 0);
+        const entryPrice = Number(op.entryPrice || 0);
+        const invested = qty * entryPrice;
+        const pnl = calculatePnL(op);
+
+        monthlyData[monthKey].invested += invested;
+        monthlyData[monthKey].pnl += pnl;
+    });
+
+    // Ordenar os meses cronologicamente
+    const sortedMonths = Object.keys(monthlyData).sort();
+
+    if (sortedMonths.length === 0) {
+        // Mês atual como padrão se vazio
+        const now = new Date();
+        const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        sortedMonths.push(currentMonthKey);
+        monthlyData[currentMonthKey] = { invested: 0, pnl: 0 };
+    }
+
+    const labels = [];
+    const patrimonyValues = [];
+
+    sortedMonths.forEach(monthKey => {
+        const [year, month] = monthKey.split('-');
+        const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        labels.push(`${monthNames[parseInt(month, 10) - 1]}/${year}`);
+
+        const dataObj = monthlyData[monthKey];
+        // Patrimônio = Total investido somado com o lucro ou perda
+        const totalPatrimony = dataObj.invested + dataObj.pnl;
+        patrimonyValues.push(totalPatrimony);
+    });
+
+    if (patrimonyChartInstance) {
+        patrimonyChartInstance.destroy();
+    }
+
+    patrimonyChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Patrimônio (Investido + P&L)',
+                data: patrimonyValues,
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.3,
+                pointRadius: 5,
+                pointBackgroundColor: '#3b82f6'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let value = context.parsed.y || 0;
+                            return `Patrimônio: R$ ${value.toFixed(2)}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return `R$ ${value.toFixed(0)}`;
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
 }
 
 // Funções auxiliares

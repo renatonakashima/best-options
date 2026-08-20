@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Best Options - Monitor de Operações com Opções</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- Chart.js para gráficos de evolução patrimonial -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
@@ -78,7 +80,16 @@
             </div>
 
             <!-- Análise -->
-            <div id="analytics" class="tab-pane">
+                <div id="analytics" class="tab-pane">
+                <!-- Gráfico de Evolução Patrimonial Mensal -->
+                <div class="card" style="margin-bottom: 20px;">
+                    <h3>Evolução Patrimonial Mensal</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px;">Valor total investido somado ao lucro/prejuízo por mês</p>
+                    <div style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="patrimonyChart"></canvas>
+                    </div>
+                </div>
+
                 <div class="analytics-grid">
                     <div class="card">
                         <h3>Resumo de Operações</h3>
