@@ -82,9 +82,10 @@ function generateB3ExpiryDates() {
             tempDate.setDate(tempDate.getDate() + 1);
         }
         
-        // Adicionar as sextas-feiras como W1, W2, W3, W4, W5
+        // Adicionar as sextas-feiras como W1, W2, W3 (ou estrela), W4, W5
         fridays.forEach((fri, index) => {
-            const weekLabel = `W${index + 1}`;
+            const weekNum = index + 1;
+            const weekLabel = weekNum === 3 ? '⭐' : `W${weekNum}`;
             dates.push({
                 date: new Date(fri),
                 label: weekLabel,
