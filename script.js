@@ -525,7 +525,7 @@ function updateAnalytics() {
             <td style="padding: 14px;">${grandQtyDisplay}</td>
             <td style="padding: 14px; color: ${grandAllocatedColor}; font-size: 1.05rem;">${grandAllocatedDisplay}</td>
             <td style="padding: 14px; font-size: 0.9rem; color: var(--text-primary);">
-                Rational Total: <span style="color: ${grandRationalColor};">${grandRationalDisplay}</span> 
+                Notion Total: <span style="color: ${grandRationalColor};">${grandRationalDisplay}</span> 
                 <br><span style="font-size: 0.8rem; color: var(--text-secondary);">(Quantidade x Strike | Compradas positivas, Vendidas negativas)</span>
             </td>
         </tr>
