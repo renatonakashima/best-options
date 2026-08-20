@@ -473,7 +473,6 @@ function updateAnalytics() {
         let totalQty = 0;
         let totalAllocated = 0;
         let totalRational = 0;
-        let rationalParts = [];
 
         matchingOps.forEach(op => {
             const qty = Number(op.quantity || 0);
@@ -485,12 +484,6 @@ function updateAnalytics() {
             totalQty += qty;
             totalAllocated += allocated;
             totalRational += opRational;
-
-            if (op.asset) {
-                const signedOpRational = cfg.isSold ? -opRational : opRational;
-                const signStr = signedOpRational >= 0 ? '+' : '';
-                rationalParts.push(`${op.asset} (${qty} x R$ ${strike.toFixed(2)} = ${signStr}R$ ${signedOpRational.toFixed(2)})`);
-            }
         });
 
         // Compradas são positivas, vendidas são negativas
@@ -507,15 +500,14 @@ function updateAnalytics() {
         const allocatedDisplay = `${signedAllocated >= 0 ? '+' : ''}R$ ${Math.abs(signedAllocated).toFixed(2)}`;
         
         const rationalColor = signedRational >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
-        const rationalDisplay = `${signedRational >= 0 ? '+' : ''}R$ ${Math.abs(signedRational).toFixed(2)}`;
-        const rationalText = rationalParts.length > 0 ? `${rationalParts.join(' | ')} <br><strong>Total Rational: <span style="color: ${rationalColor};">${rationalDisplay}</span></strong>` : 'Nenhuma operação cadastrada';
+        const rationalDisplay = matchingOps.length > 0 ? `${signedRational >= 0 ? '+' : ''}R$ ${Math.abs(signedRational).toFixed(2)}` : 'R$ 0,00';
 
         return `
             <tr style="border-bottom: 1px solid var(--border-color);">
                 <td style="padding: 12px; font-weight: 600;">${cfg.label}</td>
                 <td style="padding: 12px;">${qtyDisplay}</td>
                 <td style="padding: 12px; color: ${allocatedColor}; font-weight: 600;">${allocatedDisplay}</td>
-                <td style="padding: 12px; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">${rationalText}</td>
+                <td style="padding: 12px; font-weight: 600; color: ${rationalColor};">${rationalDisplay}</td>
             </tr>
         `;
     }).join('');
