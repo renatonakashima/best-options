@@ -462,6 +462,7 @@ function updateAnalytics() {
 
     let grandTotalQuantity = 0;
     let grandTotalAllocated = 0;
+    let grandTotalRational = 0;
 
     const summaryRowsHTML = typesConfig.map(cfg => {
         const matchingOps = allKnownOperations.filter(op => {
@@ -471,38 +472,50 @@ function updateAnalytics() {
 
         let totalQty = 0;
         let totalAllocated = 0;
+        let totalRational = 0;
         let rationalParts = [];
 
         matchingOps.forEach(op => {
             const qty = Number(op.quantity || 0);
             const price = Number(op.currentPrice !== undefined ? op.currentPrice : (op.entryPrice || 0));
+            const strike = Number(op.strike || 0);
             const allocated = qty * price;
+            const opRational = qty * strike;
 
             totalQty += qty;
             totalAllocated += allocated;
+            totalRational += opRational;
+
             if (op.asset) {
-                rationalParts.push(`${op.asset} (Qtd: ${qty}, Strike: R$ ${Number(op.strike || 0).toFixed(2)})`);
+                const signedOpRational = cfg.isSold ? -opRational : opRational;
+                const signStr = signedOpRational >= 0 ? '+' : '';
+                rationalParts.push(`${op.asset} (${qty} x R$ ${strike.toFixed(2)} = ${signStr}R$ ${signedOpRational.toFixed(2)})`);
             }
         });
 
         // Compradas são positivas, vendidas são negativas
         const signedQty = cfg.isSold ? -totalQty : totalQty;
         const signedAllocated = cfg.isSold ? -totalAllocated : totalAllocated;
+        const signedRational = cfg.isSold ? -totalRational : totalRational;
 
         grandTotalQuantity += signedQty;
         grandTotalAllocated += signedAllocated;
+        grandTotalRational += signedRational;
 
         const qtyDisplay = cfg.isSold ? `-${Math.abs(signedQty).toFixed(2)}` : `${Math.abs(signedQty).toFixed(2)}`;
         const allocatedColor = signedAllocated >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
         const allocatedDisplay = `${signedAllocated >= 0 ? '+' : ''}R$ ${Math.abs(signedAllocated).toFixed(2)}`;
-        const rationalText = rationalParts.length > 0 ? rationalParts.join(' | ') : 'Nenhuma operação cadastrada';
+        
+        const rationalColor = signedRational >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+        const rationalDisplay = `${signedRational >= 0 ? '+' : ''}R$ ${Math.abs(signedRational).toFixed(2)}`;
+        const rationalText = rationalParts.length > 0 ? `${rationalParts.join(' | ')} <br><strong>Total Rational: <span style="color: ${rationalColor};">${rationalDisplay}</span></strong>` : 'Nenhuma operação cadastrada';
 
         return `
             <tr style="border-bottom: 1px solid var(--border-color);">
                 <td style="padding: 12px; font-weight: 600;">${cfg.label}</td>
                 <td style="padding: 12px;">${qtyDisplay}</td>
                 <td style="padding: 12px; color: ${allocatedColor}; font-weight: 600;">${allocatedDisplay}</td>
-                <td style="padding: 12px; font-size: 0.85rem; color: var(--text-secondary);">${rationalText}</td>
+                <td style="padding: 12px; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">${rationalText}</td>
             </tr>
         `;
     }).join('');
@@ -511,13 +524,18 @@ function updateAnalytics() {
     const grandAllocatedColor = grandTotalAllocated >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
     const grandAllocatedDisplay = `${grandTotalAllocated >= 0 ? '+' : ''}R$ ${Math.abs(grandTotalAllocated).toFixed(2)}`;
     const grandQtyDisplay = `${grandTotalQuantity >= 0 ? '+' : ''}${grandTotalQuantity.toFixed(2)}`;
+    const grandRationalColor = grandTotalRational >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+    const grandRationalDisplay = `${grandTotalRational >= 0 ? '+' : ''}R$ ${Math.abs(grandTotalRational).toFixed(2)}`;
 
     const grandTotalRowHTML = `
         <tr style="background: rgba(59, 130, 246, 0.08); font-weight: bold; border-top: 2px solid var(--border-color);">
             <td style="padding: 14px; color: var(--primary-color);">VALOR TOTAL DE TODAS AS OPERAÇÕES</td>
             <td style="padding: 14px;">${grandQtyDisplay}</td>
             <td style="padding: 14px; color: ${grandAllocatedColor}; font-size: 1.05rem;">${grandAllocatedDisplay}</td>
-            <td style="padding: 14px; font-size: 0.85rem; color: var(--text-secondary);">Consolidado Geral (Compradas positivas, Vendidas negativas)</td>
+            <td style="padding: 14px; font-size: 0.9rem; color: var(--text-primary);">
+                Rational Total: <span style="color: ${grandRationalColor};">${grandRationalDisplay}</span> 
+                <br><span style="font-size: 0.8rem; color: var(--text-secondary);">(Quantidade x Strike | Compradas positivas, Vendidas negativas)</span>
+            </td>
         </tr>
     `;
 
