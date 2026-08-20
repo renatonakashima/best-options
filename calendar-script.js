@@ -394,7 +394,7 @@ function renderTimeline() {
             const typeLabel = getTypeLabel(operation.type);
             const totalPnL = calculateTotalClosurePnL(operation);
             const avgClosePrice = calculateAverageClosePrice(operation.closures || []);
-            const sourceLabel = operation.fromDashboard ? ' (Dashboard)' : '';
+            const sourceLabel = '';
 
             let statusBadge = 'status-open';
             if (closedQuantity > 0 && openQuantity > 0) {
