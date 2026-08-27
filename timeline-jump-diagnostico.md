@@ -8,3 +8,7 @@ A causa é a combinação de `scrollTo({ behavior: "smooth" })` com o listener d
 
 Com as duas operações temporárias, o atalho `first` posicionou 18/09/2026 com centro em 640 px e diferença de 0 px em relação ao centro do eixo. O atalho `last` posicionou 18/12/2026 também com centro em 640 px e diferença de 0 px. A rolagem das faixas ficou sincronizada em ambos os casos (`scrollLeft` 1880 px e 5910 px, respectivamente).
 
+## Validação das setas incrementais
+
+Com cinco datas consecutivas de teste, a seta direita avançou exatamente uma coluna de data (`rightAdvancedOneDate: true`) e a seta esquerda retornou à coluna anterior (`leftReturnedToPrevious: true`). As faixas do eixo e dos cards permaneceram alinhadas. Os dados de teste foram removidos do armazenamento local após a validação.
+

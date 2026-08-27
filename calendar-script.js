@@ -622,24 +622,51 @@ function bindTimelineScrollSync() {
     });
 }
 
-// Função para scroll da timeline com as setas
+// Mover uma data por vez, mantendo o centro do eixo e dos cards alinhados.
 function scrollTimeline(direction) {
-    const container = document.querySelector('.timeline-cards-container');
-    if (!container) return;
+    const cardsContainer = document.querySelector('.timeline-cards-container');
+    const axisContainer = document.querySelector('.timeline-axis-container');
+    const axisTimeline = document.getElementById('timelineAxis');
+    const cardsTimeline = document.getElementById('timeline');
+    if (!cardsContainer || !axisContainer || !axisTimeline || !cardsTimeline) return;
 
-    const scrollAmount = 300; // pixels para scroll
-    
-    if (direction === 'left') {
-        container.scrollBy({
-            left: -scrollAmount,
-            behavior: 'smooth'
-        });
-    } else if (direction === 'right') {
-        container.scrollBy({
-            left: scrollAmount,
-            behavior: 'smooth'
-        });
-    }
+    const axisItems = [...axisTimeline.querySelectorAll('.timeline-item')];
+    if (axisItems.length === 0) return;
+
+    const viewportRect = axisContainer.getBoundingClientRect();
+    const viewportCenter = viewportRect.left + (axisContainer.clientWidth / 2);
+    const tolerance = 4;
+
+    const itemCenters = axisItems.map(item => {
+        const rect = item.getBoundingClientRect();
+        return rect.left + (rect.width / 2);
+    });
+
+    const targetIndex = direction === 'right'
+        ? itemCenters.findIndex(center => center > viewportCenter + tolerance)
+        : itemCenters
+            .map((center, index) => ({ center, index }))
+            .reverse()
+            .find(entry => entry.center < viewportCenter - tolerance)?.index;
+
+    // Já está no primeiro/último item: não ultrapassar os limites da timeline.
+    if (targetIndex === undefined || targetIndex === -1) return;
+
+    const targetAxisItem = axisItems[targetIndex];
+    const targetDate = targetAxisItem.dataset.expiryDate;
+    const targetCardsItem = cardsTimeline.querySelector(`[data-expiry-date="${targetDate}"]`);
+    const targetRect = targetAxisItem.getBoundingClientRect();
+    const targetScrollLeft = axisContainer.scrollLeft +
+        (targetRect.left + (targetRect.width / 2) - viewportCenter);
+
+    // Posicionamento imediato evita que o listener de sincronização interrompa uma animação.
+    syncTimelineScrollPosition(targetScrollLeft);
+
+    [targetAxisItem, targetCardsItem].filter(Boolean).forEach(item => {
+        item.classList.remove('timeline-item-focus');
+        requestAnimationFrame(() => item.classList.add('timeline-item-focus'));
+        setTimeout(() => item.classList.remove('timeline-item-focus'), 700);
+    });
 }
 
 // Ir diretamente para a primeira ou última data que possui operação.
