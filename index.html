@@ -38,6 +38,41 @@
                         <span class="stat-label">P&L Total</span>
                         <span class="stat-value" id="totalPnL">R$ 0,00</span>
                     </div>
+                    <div class="stat-box ibov-stat" aria-label="Cotação do Ibovespa">
+                        <div class="ibov-card-header">
+                            <span class="stat-label">Ibovespa</span>
+                            <a href="https://www.google.com/finance/quote/IBOV:INDEXBVMF?hl=pt-BR" target="_blank" rel="noopener noreferrer" class="ibov-source-link" title="Conferir no Google Finance">Google Finance</a>
+                        </div>
+                        <div class="tradingview-widget-container ibov-widget">
+                            <div class="tradingview-widget-container__widget"></div>
+                            <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/BMFBOVESPA-IBOV/" target="_blank" rel="noopener noreferrer">Dados via TradingView</a></div>
+                            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js" async>
+                            {
+                              "symbols": [["BMFBOVESPA:IBOV|1D"]],
+                              "chartOnly": false,
+                              "width": "100%",
+                              "height": "165",
+                              "locale": "br",
+                              "colorTheme": "dark",
+                              "autosize": true,
+                              "showVolume": false,
+                              "showMA": false,
+                              "hideDateRanges": false,
+                              "hideMarketStatus": false,
+                              "hideSymbolLogo": true,
+                              "scalePosition": "right",
+                              "scaleMode": "Normal",
+                              "fontFamily": "-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
+                              "noTimeScale": false,
+                              "valuesTracking": "1",
+                              "changeMode": "price-and-percent",
+                              "chartType": "area",
+                              "dateRanges": ["1d|1", "5d|5", "1m|30", "3m|60", "6m|120", "1y|1D", "5y|1W", "all|1M"]
+                            }
+                            </script>
+                        </div>
+                        <div class="ibov-delay-note">Cotação atrasada; gráfico diário de 1 semana</div>
+                    </div>
                 </div>
             </div>
         </header>
