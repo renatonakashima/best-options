@@ -591,17 +591,51 @@ window.addEventListener('click', (event) => {
 
 let isSyncingTimelineScroll = false;
 
+let timelineScrollAnimationId = 0;
+
 // Manter o eixo das datas e a faixa de cards na mesma posição horizontal.
 function syncTimelineScrollPosition(scrollLeft, behavior = 'auto') {
-    document.querySelectorAll('.timeline-container').forEach(container => {
-        const maxScrollLeft = Math.max(0, container.scrollWidth - container.clientWidth);
-        const targetScrollLeft = Math.min(Math.max(0, scrollLeft), maxScrollLeft);
+    const containers = [...document.querySelectorAll('.timeline-container')];
+    if (containers.length === 0) return;
 
-        if (behavior === 'smooth') {
+    const targetScrollLeft = Math.min(
+        Math.max(0, scrollLeft),
+        Math.min(...containers.map(container => Math.max(0, container.scrollWidth - container.clientWidth)))
+    );
+
+    if (behavior === 'smooth') {
+        const animationId = ++timelineScrollAnimationId;
+        isSyncingTimelineScroll = true;
+
+        containers.forEach(container => {
             container.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
-        } else {
-            container.scrollLeft = targetScrollLeft;
-        }
+        });
+
+        const animationStartedAt = performance.now();
+        const finishSmoothScroll = () => {
+            if (animationId !== timelineScrollAnimationId) return;
+
+            const elapsed = performance.now() - animationStartedAt;
+            const currentPosition = containers[0].scrollLeft;
+            const reachedTarget = Math.abs(currentPosition - targetScrollLeft) < 1;
+
+            if (reachedTarget || elapsed >= 700) {
+                containers.forEach(container => {
+                    container.scrollLeft = targetScrollLeft;
+                });
+                isSyncingTimelineScroll = false;
+                return;
+            }
+
+            requestAnimationFrame(finishSmoothScroll);
+        };
+
+        requestAnimationFrame(finishSmoothScroll);
+        return;
+    }
+
+    containers.forEach(container => {
+        container.scrollLeft = targetScrollLeft;
     });
 }
 
@@ -659,8 +693,8 @@ function scrollTimeline(direction) {
     const targetScrollLeft = axisContainer.scrollLeft +
         (targetRect.left + (targetRect.width / 2) - viewportCenter);
 
-    // Posicionamento imediato evita que o listener de sincronização interrompa uma animação.
-    syncTimelineScrollPosition(targetScrollLeft);
+    // Animar as duas faixas juntas; os eventos intermediários são ignorados pelo sincronizador.
+    syncTimelineScrollPosition(targetScrollLeft, 'smooth');
 
     [targetAxisItem, targetCardsItem].filter(Boolean).forEach(item => {
         item.classList.remove('timeline-item-focus');
@@ -712,9 +746,8 @@ function jumpToOperationDate(target) {
     const axisCenter = axisRect.left + (axisRect.width / 2);
     const centeredPosition = axisContainer.scrollLeft + (targetCenter - axisCenter);
 
-    // O salto deve ser imediato: uma animação suave dispararia o listener de sincronização
-    // repetidamente e poderia interromper a posição antes de chegar ao centro.
-    syncTimelineScrollPosition(centeredPosition);
+    // Usar a mesma animação controlada das setas simples para manter a experiência consistente.
+    syncTimelineScrollPosition(centeredPosition, 'smooth');
 
     targetCardItem.classList.remove('timeline-item-focus');
     targetAxisItem.classList.remove('timeline-item-focus');

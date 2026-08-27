@@ -12,3 +12,7 @@ Com as duas operações temporárias, o atalho `first` posicionou 18/09/2026 com
 
 Com cinco datas consecutivas de teste, a seta direita avançou exatamente uma coluna de data (`rightAdvancedOneDate: true`) e a seta esquerda retornou à coluna anterior (`leftReturnedToPrevious: true`). As faixas do eixo e dos cards permaneceram alinhadas. Os dados de teste foram removidos do armazenamento local após a validação.
 
+## Validação da rolagem suave
+
+Durante o teste com cinco datas, a seta direita alterou progressivamente o `scrollLeft` de 2511 para 2610 px após 100 ms e chegou a 2810 px ao fim da animação. A data central mudou de 28/08/2026 para 04/09/2026, com diferença final de 0 px em relação ao centro do eixo. Os dados temporários foram usados somente no navegador local e serão removidos após o teste.
+
