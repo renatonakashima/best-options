@@ -6,15 +6,32 @@
     margin: 20px 0;
 }
 
-/* Setas de Navegação (Fixas/Suspensas na tela) */
+/* Setas e atalhos de navegação (fixos/suspensos na tela) */
 .timeline-wrapper {
     position: relative;
 }
 
-.timeline-arrow {
+.timeline-navigation {
     position: fixed;
     top: 55%;
     transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 1000;
+}
+
+.timeline-navigation-left {
+    left: 20px;
+}
+
+.timeline-navigation-right {
+    right: 20px;
+}
+
+.timeline-arrow {
+    position: static;
+    transform: none;
     background: var(--primary-color);
     color: white;
     border: none;
@@ -26,27 +43,36 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease, background-color 0.2s ease;
     flex-shrink: 0;
-    z-index: 1000;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.timeline-arrow-left {
-    left: 20px;
-}
-
-.timeline-arrow-right {
-    right: 20px;
 }
 
 .timeline-arrow:hover {
     background: var(--secondary-color);
-    transform: translateY(-50%) scale(1.1);
+    transform: scale(1.1);
 }
 
 .timeline-arrow:active {
-    transform: translateY(-50%) scale(0.95);
+    transform: scale(0.95);
+}
+
+.timeline-jump-first,
+.timeline-jump-last {
+    font-size: 1.05rem;
+    background: var(--secondary-color);
+}
+
+.timeline-jump-first:hover,
+.timeline-jump-last:hover {
+    background: var(--primary-color);
+}
+
+.timeline-item-focus {
+    outline: 3px solid var(--primary-color);
+    outline-offset: 6px;
+    border-radius: 10px;
+    transition: outline-color 0.2s ease, outline-offset 0.2s ease;
 }
 
 /* Timeline Container */
@@ -452,6 +478,29 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+    .timeline-navigation-left {
+        left: 10px;
+    }
+
+    .timeline-navigation-right {
+        right: 10px;
+    }
+
+    .timeline-navigation {
+        gap: 8px;
+    }
+
+    .timeline-arrow {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+    }
+
+    .timeline-jump-first,
+    .timeline-jump-last {
+        font-size: 0.9rem;
+    }
+
     .timeline {
         gap: 20px;
         padding: 80px 10px 20px 10px;

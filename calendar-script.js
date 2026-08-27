@@ -489,7 +489,7 @@ function renderTimeline() {
 
         // Renderizar item de timeline com rótulo B3
         return `
-            <div class="timeline-item">
+            <div class="timeline-item" data-expiry-date="${dateString}">
                 <div class="timeline-marker" style="border-color: ${monthColor};"></div>
                 <div class="timeline-date" style="color: ${monthColor};">
                     <div class="timeline-week-label" aria-label="Códigos B3 de Call e Put">
@@ -584,6 +584,8 @@ window.addEventListener('click', (event) => {
 // Função para scroll da timeline com as setas
 function scrollTimeline(direction) {
     const container = document.querySelector('.timeline-container');
+    if (!container) return;
+
     const scrollAmount = 300; // pixels para scroll
     
     if (direction === 'left') {
@@ -597,4 +599,46 @@ function scrollTimeline(direction) {
             behavior: 'smooth'
         });
     }
+}
+
+// Ir diretamente para a primeira ou última data que possui operação.
+function jumpToOperationDate(target) {
+    const container = document.querySelector('.timeline-container');
+    const timeline = document.getElementById('timeline');
+    if (!container || !timeline) return;
+
+    // Recalcular a fonte das operações para que o atalho reflita a lista atual.
+    loadDashboardOperations();
+    combineOperations();
+
+    const operationDates = [...new Set(
+        allOperations
+            .map(operation => String(operation.expiryDate || '').slice(0, 10))
+            .filter(date => /^\d{4}-\d{2}-\d{2}$/.test(date))
+    )].sort();
+
+    if (operationDates.length === 0) {
+        alert('Nenhuma operação com data de vencimento foi cadastrada.');
+        return;
+    }
+
+    const targetDate = target === 'last'
+        ? operationDates[operationDates.length - 1]
+        : operationDates[0];
+    const targetItem = timeline.querySelector(`[data-expiry-date="${targetDate}"]`);
+
+    if (!targetItem) {
+        alert(`A data ${targetDate.split('-').reverse().join('/')} está fora do período exibido na linha do tempo.`);
+        return;
+    }
+
+    const maxScrollLeft = Math.max(0, container.scrollWidth - container.clientWidth);
+    const centeredPosition = targetItem.offsetLeft - (container.clientWidth / 2) + (targetItem.clientWidth / 2);
+    const scrollLeft = Math.min(Math.max(0, centeredPosition), maxScrollLeft);
+
+    container.scrollTo({ left: scrollLeft, behavior: 'smooth' });
+    targetItem.classList.remove('timeline-item-focus');
+    // Fornece um retorno visual discreto sem deslocar o restante da página.
+    requestAnimationFrame(() => targetItem.classList.add('timeline-item-focus'));
+    setTimeout(() => targetItem.classList.remove('timeline-item-focus'), 700);
 }

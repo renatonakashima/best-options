@@ -26,13 +26,19 @@
 
         <!-- Timeline -->
         <div class="timeline-wrapper">
-            <button class="timeline-arrow timeline-arrow-left" id="scrollLeftBtn" onclick="scrollTimeline('left')">❮</button>
+            <div class="timeline-navigation timeline-navigation-left" aria-label="Navegação esquerda da linha do tempo">
+                <button class="timeline-arrow timeline-arrow-left" id="scrollLeftBtn" onclick="scrollTimeline('left')" aria-label="Mover a linha do tempo para a esquerda" title="Mover para a esquerda">❮</button>
+                <button class="timeline-arrow timeline-jump-first" id="jumpFirstOperationBtn" onclick="jumpToOperationDate('first')" aria-label="Ir para a primeira data com operação" title="Ir para a primeira data com operação">⏮</button>
+            </div>
             <div class="timeline-container">
                 <div class="timeline" id="timeline">
                     <!-- Timeline items serão inseridos aqui -->
                 </div>
             </div>
-            <button class="timeline-arrow timeline-arrow-right" id="scrollRightBtn" onclick="scrollTimeline('right')">❯</button>
+            <div class="timeline-navigation timeline-navigation-right" aria-label="Navegação direita da linha do tempo">
+                <button class="timeline-arrow timeline-arrow-right" id="scrollRightBtn" onclick="scrollTimeline('right')" aria-label="Mover a linha do tempo para a direita" title="Mover para a direita">❯</button>
+                <button class="timeline-arrow timeline-jump-last" id="jumpLastOperationBtn" onclick="jumpToOperationDate('last')" aria-label="Ir para a última data com operação" title="Ir para a última data com operação">⏭</button>
+            </div>
         </div>
     </div>
 
