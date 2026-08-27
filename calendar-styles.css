@@ -1,15 +1,10 @@
 /* Timeline Wrapper - Container com setas */
 .timeline-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 15px;
+    position: relative;
     margin: 20px 0;
 }
 
 /* Setas e atalhos de navegação (fixos/suspensos na tela) */
-.timeline-wrapper {
-    position: relative;
-}
 
 .timeline-navigation {
     position: fixed;
@@ -75,14 +70,31 @@
     transition: outline-color 0.2s ease, outline-offset 0.2s ease;
 }
 
-/* Timeline Container */
+/* Eixo fixo durante a rolagem vertical da página */
+.timeline-axis-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 80;
+    background: var(--bg-color);
+    padding: 10px 0 8px;
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.45);
+}
+
+/* Containers horizontais sincronizados */
 .timeline-container {
-    padding: 20px 0 40px 0;
+    width: 100%;
     overflow-x: auto;
-    overflow-y: visible;
+    overflow-y: hidden;
     position: relative;
-    flex: 1;
     scrollbar-width: none;
+}
+
+.timeline-axis-container {
+    padding: 0;
+}
+
+.timeline-cards-container {
+    padding: 18px 0 40px;
 }
 
 /* Remover barra de rolagem padrão */
@@ -95,15 +107,23 @@
     display: flex;
     align-items: flex-start;
     gap: 30px;
-    padding: 80px 20px 20px 20px;
-    min-width: min-content;
+    min-width: max-content;
+    width: max-content;
 }
 
-/* Linha horizontal da timeline - Posicionada no topo */
-.timeline::before {
+.timeline-axis {
+    padding: 54px 20px 16px;
+}
+
+.timeline-cards {
+    padding: 0 20px 20px;
+}
+
+/* Linha horizontal da timeline - permanece no eixo fixo */
+.timeline-axis::before {
     content: '';
     position: absolute;
-    top: 0;
+    top: 38px;
     left: 0;
     right: 0;
     height: 8px;
@@ -133,7 +153,33 @@
     scroll-behavior: smooth;
 }
 
+.timeline-axis .timeline-item {
+    padding-top: 0;
+}
+
+.timeline-cards .timeline-item {
+    padding-top: 0;
+}
+
+.timeline-axis .timeline-content,
+.timeline-cards .timeline-marker,
+.timeline-cards .timeline-date {
+    display: none;
+}
+
+.timeline-cards .timeline-content {
+    width: 100%;
+}
+
 /* Marcador de data na timeline - Sobreposto à linha */
+.timeline-axis .timeline-marker {
+    top: 38px;
+}
+
+.timeline-axis .timeline-date {
+    margin-bottom: 0;
+}
+
 .timeline-marker {
     position: absolute;
     top: -4px;
@@ -204,7 +250,7 @@
     color: var(--text-secondary);
 }
 
-/* Container de cards da mesma data - Abaixo das descrições */
+/* Container de cards da mesma data - Abaixo do eixo fixo */
 .timeline-content {
     display: flex;
     flex-direction: column;
@@ -478,6 +524,10 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+    .timeline-axis-sticky {
+        padding-top: 8px;
+    }
+
     .timeline-navigation-left {
         left: 10px;
     }
@@ -503,7 +553,14 @@
 
     .timeline {
         gap: 20px;
-        padding: 80px 10px 20px 10px;
+    }
+
+    .timeline-axis {
+        padding: 54px 10px 14px;
+    }
+
+    .timeline-cards {
+        padding: 0 10px 20px;
     }
 
     .timeline-item {

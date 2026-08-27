@@ -355,9 +355,14 @@ function renderTimeline() {
     combineOperations();
     
     const timeline = document.getElementById('timeline');
+    const timelineAxis = document.getElementById('timelineAxis');
+
+    if (!timeline || !timelineAxis) return;
 
     if (allOperations.length === 0) {
-        timeline.innerHTML = '<div class="timeline-empty"><p>Nenhuma operação com vencimento. Clique em "+ Adicionar Operação" para começar.</p></div>';
+        const emptyState = '<div class="timeline-empty"><p>Nenhuma operação com vencimento. Clique em "+ Adicionar Operação" para começar.</p></div>';
+        timelineAxis.innerHTML = '';
+        timeline.innerHTML = emptyState;
         return;
     }
 
@@ -507,13 +512,16 @@ function renderTimeline() {
         `;
     }).join('');
 
+    // O eixo e os cards usam os mesmos itens para que a posição horizontal permaneça alinhada.
+    timelineAxis.innerHTML = timelineItems;
     timeline.innerHTML = timelineItems;
+    bindTimelineScrollSync();
 
     // Rolar automaticamente: prioriza data futura (>= atual) com operação cadastrada; senão, data mais próxima da atual
     setTimeout(() => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const timelineContainer = document.querySelector('.timeline-container');
+        const timelineContainer = document.querySelector('.timeline-cards-container');
         const items = timeline.querySelectorAll('.timeline-item');
         
         let targetItem = null;
@@ -551,7 +559,7 @@ function renderTimeline() {
 
         if (targetItem && timelineContainer) {
             const scrollLeftPos = targetItem.offsetLeft - (timelineContainer.clientWidth / 2) + (targetItem.clientWidth / 2);
-            timelineContainer.scrollTo({ left: scrollLeftPos, behavior: 'smooth' });
+            syncTimelineScrollPosition(scrollLeftPos, 'smooth');
         }
     }, 100);
 }
@@ -581,9 +589,42 @@ window.addEventListener('click', (event) => {
 });
 
 
+let isSyncingTimelineScroll = false;
+
+// Manter o eixo das datas e a faixa de cards na mesma posição horizontal.
+function syncTimelineScrollPosition(scrollLeft, behavior = 'auto') {
+    document.querySelectorAll('.timeline-container').forEach(container => {
+        const maxScrollLeft = Math.max(0, container.scrollWidth - container.clientWidth);
+        const targetScrollLeft = Math.min(Math.max(0, scrollLeft), maxScrollLeft);
+
+        if (behavior === 'smooth') {
+            container.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
+        } else {
+            container.scrollLeft = targetScrollLeft;
+        }
+    });
+}
+
+function bindTimelineScrollSync() {
+    document.querySelectorAll('.timeline-container').forEach(container => {
+        if (container.dataset.timelineSyncBound === 'true') return;
+
+        container.dataset.timelineSyncBound = 'true';
+        container.addEventListener('scroll', () => {
+            if (isSyncingTimelineScroll) return;
+
+            isSyncingTimelineScroll = true;
+            syncTimelineScrollPosition(container.scrollLeft);
+            window.requestAnimationFrame(() => {
+                isSyncingTimelineScroll = false;
+            });
+        }, { passive: true });
+    });
+}
+
 // Função para scroll da timeline com as setas
 function scrollTimeline(direction) {
-    const container = document.querySelector('.timeline-container');
+    const container = document.querySelector('.timeline-cards-container');
     if (!container) return;
 
     const scrollAmount = 300; // pixels para scroll
@@ -603,7 +644,7 @@ function scrollTimeline(direction) {
 
 // Ir diretamente para a primeira ou última data que possui operação.
 function jumpToOperationDate(target) {
-    const container = document.querySelector('.timeline-container');
+    const container = document.querySelector('.timeline-cards-container');
     const timeline = document.getElementById('timeline');
     if (!container || !timeline) return;
 

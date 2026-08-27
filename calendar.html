@@ -30,9 +30,16 @@
                 <button class="timeline-arrow timeline-arrow-left" id="scrollLeftBtn" onclick="scrollTimeline('left')" aria-label="Mover a linha do tempo para a esquerda" title="Mover para a esquerda">❮</button>
                 <button class="timeline-arrow timeline-jump-first" id="jumpFirstOperationBtn" onclick="jumpToOperationDate('first')" aria-label="Ir para a primeira data com operação" title="Ir para a primeira data com operação">⏮</button>
             </div>
-            <div class="timeline-container">
-                <div class="timeline" id="timeline">
-                    <!-- Timeline items serão inseridos aqui -->
+            <div class="timeline-axis-sticky">
+                <div class="timeline-container timeline-axis-container">
+                    <div class="timeline timeline-axis" id="timelineAxis">
+                        <!-- Linha e descrições das datas serão inseridas aqui -->
+                    </div>
+                </div>
+            </div>
+            <div class="timeline-container timeline-cards-container">
+                <div class="timeline timeline-cards" id="timeline">
+                    <!-- Cards das operações serão inseridos aqui -->
                 </div>
             </div>
             <div class="timeline-navigation timeline-navigation-right" aria-label="Navegação direita da linha do tempo">
