@@ -1,4 +1,40 @@
 /* Timeline Wrapper - Container com setas */
+.calendar-header-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+/* Identidade da página principal em escala de 70%. */
+.calendar-brand {
+    color: var(--text-primary);
+}
+
+.calendar-brand-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.75rem;
+    line-height: 1.2;
+    font-weight: 700;
+}
+
+.calendar-brand-title span {
+    font-size: 1.65rem;
+}
+
+.calendar-brand p {
+    margin: 3px 0 0;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.7rem;
+    line-height: 1.4;
+}
+
+.calendar-page-title h1 {
+    margin-bottom: 5px;
+}
+
 .timeline-wrapper {
     position: relative;
     margin: 20px 0;
@@ -538,6 +574,21 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+    .calendar-brand-title {
+        font-size: 1.45rem;
+    }
+
+    .calendar-brand-title span {
+        font-size: 1.35rem;
+    }
+
+    .calendar-brand p {
+        font-size: 0.65rem;
+    }
+
+    .calendar-page-title h1 {
+        font-size: 2rem;
+    }
     .timeline-axis-sticky {
         padding-top: 8px;
     }
