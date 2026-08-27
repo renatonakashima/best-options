@@ -20,3 +20,7 @@ Durante o teste com cinco datas, a seta direita alterou progressivamente o `scro
 
 Com uma operação temporária renderizada, o centro vertical do marcador e o centro da linha horizontal coincidiram exatamente: diferença medida de 0,00 px. O deslocamento superior do item foi compensado no CSS, sem alterar a posição das datas ou dos cards.
 
+## Validação do espaçamento entre datas e cards
+
+Com operações temporárias em 18/09/2026 e 18/12/2026, a largura de cada coluna foi fixada em 280 px e o espaçamento em 30 px tanto no eixo quanto na faixa de cards. A diferença entre o centro da data e o centro do card correspondente foi de 0 px nas duas datas.
+

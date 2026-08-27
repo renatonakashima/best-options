@@ -104,10 +104,12 @@
 
 .timeline {
     --timeline-side-padding: max(20px, calc(50vw - 140px));
+    --timeline-column-width: 280px;
+    --timeline-column-gap: 30px;
     position: relative;
     display: flex;
     align-items: flex-start;
-    gap: 30px;
+    gap: var(--timeline-column-gap);
     min-width: max-content;
     width: max-content;
 }
@@ -148,8 +150,11 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-width: 280px;
-    flex-shrink: 0;
+    width: var(--timeline-column-width);
+    min-width: var(--timeline-column-width);
+    max-width: var(--timeline-column-width);
+    flex: 0 0 var(--timeline-column-width);
+    box-sizing: border-box;
     padding-top: 40px;
     scroll-behavior: smooth;
 }
@@ -170,6 +175,13 @@
 
 .timeline-cards .timeline-content {
     width: 100%;
+    box-sizing: border-box;
+}
+
+/* O conteúdo do card ocupa a coluna, mantendo seu centro sob a data correspondente. */
+.timeline-cards .expiry-card {
+    width: 100%;
+    box-sizing: border-box;
 }
 
 /* Marcador de data na timeline - Sobreposto à linha */
