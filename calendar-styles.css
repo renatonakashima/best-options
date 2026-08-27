@@ -103,6 +103,7 @@
 }
 
 .timeline {
+    --timeline-side-padding: max(20px, calc(50vw - 140px));
     position: relative;
     display: flex;
     align-items: flex-start;
@@ -112,11 +113,11 @@
 }
 
 .timeline-axis {
-    padding: 54px 20px 16px;
+    padding: 54px var(--timeline-side-padding) 16px;
 }
 
 .timeline-cards {
-    padding: 0 20px 20px;
+    padding: 0 var(--timeline-side-padding) 20px;
 }
 
 /* Linha horizontal da timeline - permanece no eixo fixo */
@@ -555,12 +556,17 @@
         gap: 20px;
     }
 
+    .timeline-axis,
+    .timeline-cards {
+        --timeline-side-padding: max(20px, calc(50vw - 140px));
+    }
+
     .timeline-axis {
-        padding: 54px 10px 14px;
+        padding: 54px var(--timeline-side-padding) 14px;
     }
 
     .timeline-cards {
-        padding: 0 10px 20px;
+        padding: 0 var(--timeline-side-padding) 20px;
     }
 
     .timeline-item {

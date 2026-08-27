@@ -644,9 +644,11 @@ function scrollTimeline(direction) {
 
 // Ir diretamente para a primeira ou última data que possui operação.
 function jumpToOperationDate(target) {
-    const container = document.querySelector('.timeline-cards-container');
-    const timeline = document.getElementById('timeline');
-    if (!container || !timeline) return;
+    const cardsContainer = document.querySelector('.timeline-cards-container');
+    const axisContainer = document.querySelector('.timeline-axis-container');
+    const cardsTimeline = document.getElementById('timeline');
+    const axisTimeline = document.getElementById('timelineAxis');
+    if (!cardsContainer || !axisContainer || !cardsTimeline || !axisTimeline) return;
 
     // Recalcular a fonte das operações para que o atalho reflita a lista atual.
     loadDashboardOperations();
@@ -666,20 +668,36 @@ function jumpToOperationDate(target) {
     const targetDate = target === 'last'
         ? operationDates[operationDates.length - 1]
         : operationDates[0];
-    const targetItem = timeline.querySelector(`[data-expiry-date="${targetDate}"]`);
+    const targetCardItem = cardsTimeline.querySelector(`[data-expiry-date="${targetDate}"]`);
+    const targetAxisItem = axisTimeline.querySelector(`[data-expiry-date="${targetDate}"]`);
 
-    if (!targetItem) {
+    if (!targetCardItem || !targetAxisItem) {
         alert(`A data ${targetDate.split('-').reverse().join('/')} está fora do período exibido na linha do tempo.`);
         return;
     }
 
-    const maxScrollLeft = Math.max(0, container.scrollWidth - container.clientWidth);
-    const centeredPosition = targetItem.offsetLeft - (container.clientWidth / 2) + (targetItem.clientWidth / 2);
-    const scrollLeft = Math.min(Math.max(0, centeredPosition), maxScrollLeft);
+    // Calcula a distância entre o centro real da data no eixo e o centro visível do eixo.
+    // Usar getBoundingClientRect evita o erro causado por padding e offsets diferentes
+    // entre a faixa fixa do eixo e a faixa rolável dos cards.
+    const axisRect = axisContainer.getBoundingClientRect();
+    const targetRect = targetAxisItem.getBoundingClientRect();
+    const targetCenter = targetRect.left + (targetRect.width / 2);
+    const axisCenter = axisRect.left + (axisRect.width / 2);
+    const centeredPosition = axisContainer.scrollLeft + (targetCenter - axisCenter);
 
-    container.scrollTo({ left: scrollLeft, behavior: 'smooth' });
-    targetItem.classList.remove('timeline-item-focus');
+    // O salto deve ser imediato: uma animação suave dispararia o listener de sincronização
+    // repetidamente e poderia interromper a posição antes de chegar ao centro.
+    syncTimelineScrollPosition(centeredPosition);
+
+    targetCardItem.classList.remove('timeline-item-focus');
+    targetAxisItem.classList.remove('timeline-item-focus');
     // Fornece um retorno visual discreto sem deslocar o restante da página.
-    requestAnimationFrame(() => targetItem.classList.add('timeline-item-focus'));
-    setTimeout(() => targetItem.classList.remove('timeline-item-focus'), 700);
+    requestAnimationFrame(() => {
+        targetCardItem.classList.add('timeline-item-focus');
+        targetAxisItem.classList.add('timeline-item-focus');
+    });
+    setTimeout(() => {
+        targetCardItem.classList.remove('timeline-item-focus');
+        targetAxisItem.classList.remove('timeline-item-focus');
+    }, 700);
 }
