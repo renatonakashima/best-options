@@ -1,9 +1,29 @@
 // Armazenamento de dados
 let operations = JSON.parse(localStorage.getItem('operations')) || [];
 let closedOperations = JSON.parse(localStorage.getItem('closedOperations')) || [];
+let financialValuesHidden = localStorage.getItem('financialValuesHidden') === 'true';
+
+function updateFinancialVisibilityUI() {
+    const toggle = document.getElementById('financialVisibilityToggle');
+    const icon = document.getElementById('financialVisibilityIcon');
+    if (!toggle || !icon) return;
+
+    toggle.setAttribute('aria-checked', String(financialValuesHidden));
+    toggle.setAttribute('aria-label', financialValuesHidden ? 'Mostrar valores financeiros' : 'Ocultar valores financeiros');
+    toggle.title = financialValuesHidden ? 'Mostrar valores da Carteira e do P&L' : 'Ocultar valores da Carteira e do P&L';
+    icon.textContent = financialValuesHidden ? '◉' : '👁';
+}
+
+function toggleFinancialVisibility() {
+    financialValuesHidden = !financialValuesHidden;
+    localStorage.setItem('financialValuesHidden', String(financialValuesHidden));
+    updateFinancialVisibilityUI();
+    updatePortfolioStats();
+}
 
 // Inicializar
 document.addEventListener('DOMContentLoaded', () => {
+    updateFinancialVisibilityUI();
     updatePortfolioStats();
     renderPositions();
     renderHistory();
@@ -376,8 +396,12 @@ function updatePortfolioStats() {
         totalPnL += calculatePnL(op);
     });
 
-    document.getElementById('portfolioValue').textContent = `R$ ${totalValue.toFixed(2)}`;
-    document.getElementById('totalPnL').textContent = `R$ ${totalPnL.toFixed(2)}`;
+    document.getElementById('portfolioValue').textContent = financialValuesHidden
+        ? 'R$ ••••••'
+        : `R$ ${totalValue.toFixed(2)}`;
+    document.getElementById('totalPnL').textContent = financialValuesHidden
+        ? 'R$ ••••••'
+        : `R$ ${totalPnL.toFixed(2)}`;
 
     // Cor do P&L
     const pnlElement = document.getElementById('totalPnL');

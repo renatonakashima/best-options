@@ -18,8 +18,20 @@
             </div>
             <div class="header-actions">
                 <div class="header-stats">
-                    <div class="stat-box">
-                        <span class="stat-label">Carteira</span>
+                    <div class="stat-box portfolio-stat">
+                        <div class="stat-heading">
+                            <span class="stat-label">Carteira</span>
+                            <button
+                                type="button"
+                                class="visibility-toggle"
+                                id="financialVisibilityToggle"
+                                role="checkbox"
+                                aria-checked="false"
+                                aria-label="Ocultar valores financeiros"
+                                title="Ocultar valores da Carteira e do P&L"
+                                onclick="toggleFinancialVisibility()"
+                            ><span id="financialVisibilityIcon" aria-hidden="true">👁</span></button>
+                        </div>
                         <span class="stat-value" id="portfolioValue">R$ 0,00</span>
                     </div>
                     <div class="stat-box">
