@@ -59,6 +59,18 @@ body {
     align-items: stretch;
 }
 
+.stats-column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 180px;
+}
+
+.stats-column .stat-box {
+    flex: 1;
+    padding: 11px 18px;
+}
+
 .stat-box {
     background: rgba(255, 255, 255, 0.1);
     padding: 15px 25px;
@@ -117,8 +129,8 @@ body {
 }
 
 .ibov-stat {
-    width: 330px;
-    min-width: 300px;
+    width: 390px;
+    min-width: 360px;
     padding: 12px 16px;
     text-align: left;
 }
@@ -594,11 +606,17 @@ textarea {
 
     .header-stats {
         width: 100%;
-        justify-content: space-around;
+        flex-direction: column;
+        gap: 12px;
     }
 
     .stat-box {
         padding: 12px 16px;
+    }
+
+    .stats-column {
+        width: 100%;
+        min-width: 0;
     }
 
     .ibov-stat {

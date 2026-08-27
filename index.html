@@ -18,25 +18,27 @@
             </div>
             <div class="header-actions">
                 <div class="header-stats">
-                    <div class="stat-box portfolio-stat">
-                        <div class="stat-heading">
-                            <span class="stat-label">Carteira</span>
-                            <button
-                                type="button"
-                                class="visibility-toggle"
-                                id="financialVisibilityToggle"
-                                role="checkbox"
-                                aria-checked="false"
-                                aria-label="Ocultar valores financeiros"
-                                title="Ocultar valores da Carteira e do P&L"
-                                onclick="toggleFinancialVisibility()"
-                            ><span id="financialVisibilityIcon" aria-hidden="true">👁</span></button>
+                    <div class="stats-column" aria-label="Resumo financeiro">
+                        <div class="stat-box portfolio-stat">
+                            <div class="stat-heading">
+                                <span class="stat-label">Carteira</span>
+                                <button
+                                    type="button"
+                                    class="visibility-toggle"
+                                    id="financialVisibilityToggle"
+                                    role="checkbox"
+                                    aria-checked="false"
+                                    aria-label="Ocultar valores financeiros"
+                                    title="Ocultar valores da Carteira e do P&L"
+                                    onclick="toggleFinancialVisibility()"
+                                ><span id="financialVisibilityIcon" aria-hidden="true">👁</span></button>
+                            </div>
+                            <span class="stat-value" id="portfolioValue">R$ 0,00</span>
                         </div>
-                        <span class="stat-value" id="portfolioValue">R$ 0,00</span>
-                    </div>
-                    <div class="stat-box">
-                        <span class="stat-label">P&L Total</span>
-                        <span class="stat-value" id="totalPnL">R$ 0,00</span>
+                        <div class="stat-box pnl-stat">
+                            <span class="stat-label">P&L Total</span>
+                            <span class="stat-value" id="totalPnL">R$ 0,00</span>
+                        </div>
                     </div>
                     <div class="stat-box ibov-stat" aria-label="Cotação do Ibovespa">
                         <div class="ibov-card-header">
