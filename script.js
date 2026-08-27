@@ -738,29 +738,51 @@ function exportData() {
     link.click();
 }
 
-// Limpar todos os dados
+// Modal de segurança para limpar todos os dados
 function clearAllData() {
-    if (confirm('Tem certeza que deseja limpar TODOS os dados? Esta ação não pode ser desfeita!')) {
-        operations = [];
-        closedOperations = [];
-        saveData();
-        updatePortfolioStats();
-        renderPositions();
-        renderHistory();
-        updateAnalytics();
-        alert('Todos os dados foram limpos.');
-    }
+    const modal = document.getElementById('clearDataModal');
+    if (!modal) return;
+    modal.classList.add('active');
+    const cancelButton = modal.querySelector('.clear-data-cancel');
+    if (cancelButton) cancelButton.focus();
+}
+
+function closeClearDataModal() {
+    const modal = document.getElementById('clearDataModal');
+    if (modal) modal.classList.remove('active');
+}
+
+function exportDataFromClearModal() {
+    exportData();
+    closeClearDataModal();
+}
+
+function confirmClearAllData() {
+    operations = [];
+    closedOperations = [];
+    localStorage.removeItem('expiryOperations');
+    saveData();
+    updatePortfolioStats();
+    renderPositions();
+    renderHistory();
+    updateAnalytics();
+    closeClearDataModal();
+    alert('Todos os dados foram limpos.');
 }
 
 // Fechar modais ao clicar fora deles
 window.addEventListener('click', (event) => {
     const operationModal = document.getElementById('operationModal');
     const editModal = document.getElementById('editModal');
+    const clearDataModal = document.getElementById('clearDataModal');
 
     if (event.target === operationModal) {
         closeAddOperationModal();
     }
     if (event.target === editModal) {
         closeEditModal();
+    }
+    if (event.target === clearDataModal) {
+        closeClearDataModal();
     }
 });

@@ -534,6 +534,94 @@ body {
     color: var(--text-primary);
 }
 
+/* Modal de confirmação de limpeza */
+.clear-data-modal-content {
+    max-width: 620px;
+}
+
+.clear-data-body {
+    padding: 22px;
+}
+
+.clear-data-body p {
+    margin: 0;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.clear-data-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.clear-data-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 76px;
+    padding: 13px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--surface-color);
+    color: var(--text-primary);
+    text-align: left;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.clear-data-option:hover,
+.clear-data-option:focus-visible {
+    transform: translateY(-2px);
+    outline: none;
+}
+
+.clear-data-option strong,
+.clear-data-option small {
+    display: block;
+}
+
+.clear-data-option strong {
+    font-size: 0.98rem;
+}
+
+.clear-data-option small {
+    margin-top: 4px;
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    line-height: 1.25;
+}
+
+.clear-data-icon {
+    display: grid;
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border-radius: 50%;
+}
+
+.clear-data-icon svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2;
+}
+
+.clear-data-cancel:hover,
+.clear-data-cancel:focus-visible { border-color: #ef4444; }
+.clear-data-cancel .clear-data-icon { background: rgba(239, 68, 68, 0.14); color: #f87171; }
+.clear-data-export:hover,
+.clear-data-export:focus-visible { border-color: var(--primary-color); }
+.clear-data-export .clear-data-icon { background: rgba(37, 99, 235, 0.16); color: #60a5fa; }
+.clear-data-confirm:hover,
+.clear-data-confirm:focus-visible { border-color: #22c55e; }
+.clear-data-confirm .clear-data-icon { background: rgba(34, 197, 94, 0.14); color: #4ade80; }
+
 /* Forms */
 form {
     padding: 20px;
@@ -605,6 +693,13 @@ textarea {
 
 /* Responsive */
 @media (max-width: 768px) {
+    .clear-data-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .clear-data-option {
+        min-height: 62px;
+    }
     .header {
         flex-direction: column;
         gap: 20px;
