@@ -16,3 +16,7 @@ Com cinco datas consecutivas de teste, a seta direita avançou exatamente uma co
 
 Durante o teste com cinco datas, a seta direita alterou progressivamente o `scrollLeft` de 2511 para 2610 px após 100 ms e chegou a 2810 px ao fim da animação. A data central mudou de 28/08/2026 para 04/09/2026, com diferença final de 0 px em relação ao centro do eixo. Os dados temporários foram usados somente no navegador local e serão removidos após o teste.
 
+## Validação do marcador circular
+
+Com uma operação temporária renderizada, o centro vertical do marcador e o centro da linha horizontal coincidiram exatamente: diferença medida de 0,00 px. O deslocamento superior do item foi compensado no CSS, sem alterar a posição das datas ou dos cards.
+

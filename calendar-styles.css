@@ -174,7 +174,8 @@
 
 /* Marcador de data na timeline - Sobreposto à linha */
 .timeline-axis .timeline-marker {
-    top: 38px;
+    /* O item começa 54px abaixo do eixo; -12px coloca o centro em 42px. */
+    top: -12px;
 }
 
 .timeline-axis .timeline-date {
