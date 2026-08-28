@@ -23,7 +23,14 @@
             </div>
             <div class="header-actions" style="flex-direction: column; align-items: flex-end; gap: 8px;">
                 <!-- O badge do usuário é injetado aqui em cima pelo auth.js -->
-                <div style="display: flex; gap: 8px; align-items: center;">
+                <div class="calendar-header-controls">
+                    <label class="closed-operations-toggle" for="showClosedOperationsToggle" title="Incluir operações encerradas na linha do tempo">
+                        <span class="switch-control">
+                            <input type="checkbox" id="showClosedOperationsToggle" onchange="toggleClosedOperations(this.checked)">
+                            <span class="switch-slider" aria-hidden="true"></span>
+                        </span>
+                        <span class="toggle-label">Mostrar encerradas</span>
+                    </label>
                     <button class="btn btn-primary" onclick="openAddExpiryModal()">+ Adicionar Operação</button>
                     <a href="index.html" class="btn btn-secondary">← Voltar ao Dashboard</a>
                 </div>

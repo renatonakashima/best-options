@@ -2,6 +2,23 @@
 let expiryOperations = JSON.parse(localStorage.getItem('expiryOperations')) || [];
 let dashboardOperations = JSON.parse(localStorage.getItem('operations')) || [];
 let allOperations = [];
+let showClosedOperations = false;
+
+function getClosedOperations() {
+    return typeof closedOperations !== 'undefined' && Array.isArray(closedOperations)
+        ? closedOperations
+        : JSON.parse(localStorage.getItem('closedOperations')) || [];
+}
+
+function isClosedOperation(operation) {
+    const openQuantity = Number(operation.quantity || 0) - (operation.closures || []).reduce((sum, closure) => sum + Number(closure.quantity || 0), 0);
+    return operation.status === 'closed' || openQuantity <= 0;
+}
+
+function toggleClosedOperations(shouldShow) {
+    showClosedOperations = Boolean(shouldShow);
+    renderTimeline();
+}
 
 // Inicializar
 document.addEventListener('DOMContentLoaded', () => {
@@ -16,11 +33,11 @@ function loadDashboardOperations() {
 
 // Combinar todas as operações
 function combineOperations() {
-    allOperations = [...expiryOperations];
+    allOperations = expiryOperations.filter(operation => showClosedOperations || !isClosedOperation(operation));
     
     // Adicionar operações do dashboard que têm data de vencimento
     dashboardOperations.forEach(dashOp => {
-        if (dashOp.expiryDate && !expiryOperations.find(op => op.id === dashOp.id)) {
+        if (dashOp.expiryDate && (showClosedOperations || !isClosedOperation(dashOp)) && !expiryOperations.find(op => op.id === dashOp.id)) {
             allOperations.push({
                 id: dashOp.id,
                 expiryDate: dashOp.expiryDate,
@@ -40,8 +57,27 @@ function combineOperations() {
         }
     });
 
-    // Ordenar por data de vencimento
-    allOperations.sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate));
+    // Operações encerradas ficam ocultas por padrão e só entram quando a chave é ligada.
+    if (showClosedOperations) {
+        getClosedOperations().forEach(closedOp => {
+            if (!allOperations.some(operation => String(operation.id) === String(closedOp.id))) {
+                allOperations.push({
+                    ...closedOp,
+                    type: closedOp.type || closedOp.operationType,
+                    status: 'closed',
+                    closures: Array.isArray(closedOp.closures) ? closedOp.closures : [],
+                    fromClosedHistory: true
+                });
+            }
+        });
+    }
+
+    // Ordenar por data de vencimento; na mesma data, abertas/parciais antes das encerradas.
+    allOperations.sort((a, b) => {
+        const dateDifference = new Date(a.expiryDate) - new Date(b.expiryDate);
+        if (dateDifference !== 0) return dateDifference;
+        return Number(isClosedOperation(a)) - Number(isClosedOperation(b));
+    });
 }
 
 // Gerar datas de vencimento B3
@@ -485,8 +521,10 @@ function renderTimeline() {
                     </div>
 
                     <div class="expiry-actions">
-                        <button class="btn-close" onclick="openClosePartialModal(${operation.id})">💰 Encerrar</button>
-                        ${!operation.fromDashboard ? `<button class="btn-delete" onclick="deleteExpiryOperation(${operation.id})">🗑️ Deletar</button>` : '<span>Sincronizado</span>'}
+                        ${isClosedOperation(operation)
+                            ? '<span class="closed-history-label">✓ Operação encerrada</span>'
+                            : `<button class="btn-close" onclick="openClosePartialModal(${operation.id})">💰 Encerrar</button>
+                               ${!operation.fromDashboard ? `<button class="btn-delete" onclick="deleteExpiryOperation(${operation.id})">🗑️ Deletar</button>` : '<span>Sincronizado</span>'}`}
                     </div>
                 </div>
             `;
