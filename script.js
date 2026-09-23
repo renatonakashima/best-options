@@ -568,17 +568,18 @@ function updateAnalytics() {
 }
 
 let patrimonyChartInstance = null;
-const chartDatasetVisibility = { buy: true, sell: true, profit: true, loss: true };
+const chartDatasetVisibility = { patrimony: true, buy: true, sell: true, profit: true, loss: true };
 
 function renderPatrimonyChart(allKnownOps) {
     const ctx = document.getElementById('patrimonyChart');
     if (!ctx) return;
 
-    // O gráfico considera somente ordens ainda planejadas.
+    // A linha patrimonial mantém o cálculo original com todas as operações.
+    // As quatro linhas adicionais consideram somente ordens planejadas.
     const plannedOperations = allKnownOps.filter(op => op.status === 'planned');
     const monthlyData = {};
 
-    plannedOperations.forEach(op => {
+    allKnownOps.forEach(op => {
         let dateStr = op.createdAt || op.expiryDate || new Date().toISOString();
         let date = new Date(dateStr);
         if (isNaN(date)) date = new Date();
@@ -586,9 +587,23 @@ function renderPatrimonyChart(allKnownOps) {
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         
         if (!monthlyData[monthKey]) {
-            monthlyData[monthKey] = { buy: 0, sell: 0, profit: 0, loss: 0 };
+            monthlyData[monthKey] = { invested: 0, pnl: 0, buy: 0, sell: 0, profit: 0, loss: 0 };
         }
 
+        const qty = Number(op.quantity || 0);
+        const entryPrice = Number(op.entryPrice || 0);
+        const orderValue = qty * entryPrice;
+        monthlyData[monthKey].invested += orderValue;
+        monthlyData[monthKey].pnl += Number(calculatePnL(op) || 0);
+    });
+
+    plannedOperations.forEach(op => {
+        let dateStr = op.createdAt || op.expiryDate || new Date().toISOString();
+        let date = new Date(dateStr);
+        if (isNaN(date)) date = new Date();
+
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        const data = monthlyData[monthKey];
         const qty = Number(op.quantity || 0);
         const entryPrice = Number(op.entryPrice || 0);
         const orderValue = qty * entryPrice;
@@ -596,14 +611,14 @@ function renderPatrimonyChart(allKnownOps) {
         const pnl = Number(calculatePnL(op) || 0);
 
         if (operationType.includes('sold')) {
-            monthlyData[monthKey].sell += orderValue;
+            data.sell += orderValue;
         } else {
-            monthlyData[monthKey].buy += orderValue;
+            data.buy += orderValue;
         }
         if (pnl >= 0) {
-            monthlyData[monthKey].profit += pnl;
+            data.profit += pnl;
         } else {
-            monthlyData[monthKey].loss += pnl;
+            data.loss += pnl;
         }
     });
 
@@ -615,10 +630,11 @@ function renderPatrimonyChart(allKnownOps) {
         const now = new Date();
         const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
         sortedMonths.push(currentMonthKey);
-        monthlyData[currentMonthKey] = { buy: 0, sell: 0, profit: 0, loss: 0 };
+        monthlyData[currentMonthKey] = { invested: 0, pnl: 0, buy: 0, sell: 0, profit: 0, loss: 0 };
     }
 
     const labels = [];
+    const patrimonyValues = [];
     const buyValues = [];
     const sellValues = [];
     const profitValues = [];
@@ -630,6 +646,7 @@ function renderPatrimonyChart(allKnownOps) {
         labels.push(`${monthNames[parseInt(month, 10) - 1]}/${year}`);
 
         const dataObj = monthlyData[monthKey];
+        patrimonyValues.push(dataObj.invested + dataObj.pnl);
         buyValues.push(dataObj.buy);
         sellValues.push(dataObj.sell);
         profitValues.push(dataObj.profit);
@@ -645,7 +662,8 @@ function renderPatrimonyChart(allKnownOps) {
         data: {
             labels: labels,
             datasets: [
-                createChartDataset('buy', 'Ordens de compra', buyValues, '#3b82f6'),
+                createChartDataset('patrimony', 'Patrimônio (Investido + P&L)', patrimonyValues, '#3b82f6'),
+                createChartDataset('buy', 'Ordens de compra', buyValues, '#06b6d4'),
                 createChartDataset('sell', 'Ordens de venda', sellValues, '#f59e0b'),
                 createChartDataset('profit', 'Lucro', profitValues, '#10b981'),
                 createChartDataset('loss', 'Prejuízo', lossValues, '#ef4444')

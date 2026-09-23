@@ -132,12 +132,17 @@
                 <div id="analytics" class="tab-pane">
                 <!-- Gráfico de evolução das operações planejadas -->
                 <div class="card" style="margin-bottom: 20px;">
-                    <h3>Evolução das Ordens Planejadas</h3>
-                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px;">Valores das ordens de compra e venda, lucro e prejuízo acumulados por mês</p>
+                    <h3>Evolução Patrimonial e Ordens Planejadas</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px;">Evolução patrimonial e valores das ordens de compra e venda, lucro e prejuízo por mês</p>
                     <div style="position: relative; height: 300px; width: 100%;">
                         <canvas id="patrimonyChart"></canvas>
                     </div>
                     <div class="chart-toggles" aria-label="Linhas exibidas no gráfico">
+                        <label class="chart-toggle chart-toggle-patrimony">
+                            <input type="checkbox" data-chart-dataset="patrimony" checked onchange="toggleChartDataset('patrimony', this.checked)">
+                            <span class="chart-toggle-switch" aria-hidden="true"></span>
+                            <span>Evolução patrimonial</span>
+                        </label>
                         <label class="chart-toggle chart-toggle-buy">
                             <input type="checkbox" data-chart-dataset="buy" checked onchange="toggleChartDataset('buy', this.checked)">
                             <span class="chart-toggle-switch" aria-hidden="true"></span>
