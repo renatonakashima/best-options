@@ -10,8 +10,19 @@ function getClosedOperations() {
         : JSON.parse(localStorage.getItem('closedOperations')) || [];
 }
 
+function getClosedQuantity(operation) {
+    return (operation.closures || []).reduce((sum, closure) => sum + Number(closure.quantity || 0), 0);
+}
+
+function getOpenQuantity(operation) {
+    if (operation.status === 'planned') return 0;
+    if (operation.openQuantity !== undefined) return Math.max(0, Number(operation.openQuantity) || 0);
+    return Math.max(0, Number(operation.quantity || 0) - getClosedQuantity(operation));
+}
+
 function isClosedOperation(operation) {
-    const openQuantity = Number(operation.quantity || 0) - (operation.closures || []).reduce((sum, closure) => sum + Number(closure.quantity || 0), 0);
+    if (operation.status === 'planned') return false;
+    const openQuantity = getOpenQuantity(operation);
     return operation.status === 'closed' || openQuantity <= 0;
 }
 
@@ -50,7 +61,8 @@ function combineOperations() {
                 notes: dashOp.notes || '',
                 closures: Array.isArray(dashOp.closures) ? dashOp.closures : [],
                 currentPrice: dashOp.currentPrice,
-                status: dashOp.status || 'open',
+                status: dashOp.status || 'active',
+                openQuantity: dashOp.openQuantity !== undefined ? dashOp.openQuantity : dashOp.quantity,
                 fromDashboard: true,
                 createdAt: dashOp.createdAt
             });
@@ -163,7 +175,12 @@ function openClosePartialModal(operationId) {
     const operation = allOperations.find(op => String(op.id) === String(operationId));
     if (!operation) return;
 
-    const openQuantity = operation.quantity - (operation.closures?.reduce((sum, c) => sum + c.quantity, 0) || 0);
+    if (operation.status === 'planned') {
+        activateExpiryOperation(operationId);
+        return;
+    }
+
+    const openQuantity = getOpenQuantity(operation);
     
     document.getElementById('closeOperationId').value = operationId;
     document.getElementById('closeQuantity').value = '';
@@ -192,6 +209,8 @@ function addExpiryOperation(event) {
         iv: parseFloat(document.getElementById('expiryIV').value) || 0,
         notes: document.getElementById('expiryNotes').value,
         closures: [],
+        status: 'planned',
+        openQuantity: 0,
         createdAt: new Date().toISOString()
     };
 
@@ -208,6 +227,38 @@ function addExpiryOperation(event) {
     renderTimeline();
 }
 
+// Ativar uma operação planejada, liberando sua quantidade para encerramento.
+function activateExpiryOperation(operationId) {
+    const operation = allOperations.find(op => String(op.id) === String(operationId));
+    if (!operation || operation.status !== 'planned') return;
+
+    operation.status = 'active';
+    operation.openQuantity = Number(operation.quantity || 0);
+
+    if (operation.fromDashboard) {
+        const index = dashboardOperations.findIndex(op => String(op.id) === String(operation.id));
+        if (index !== -1) {
+            dashboardOperations[index].status = 'active';
+            dashboardOperations[index].openQuantity = operation.openQuantity;
+            localStorage.setItem('operations', JSON.stringify(dashboardOperations));
+            if (useFirebase && typeof saveOperationToFirebase === 'function') {
+                saveOperationToFirebase(dashboardOperations[index]).catch(err => console.error('Erro ao ativar operação no Firebase:', err));
+            }
+        }
+    } else {
+        const index = expiryOperations.findIndex(op => String(op.id) === String(operation.id));
+        if (index !== -1) {
+            expiryOperations[index].status = 'active';
+            expiryOperations[index].openQuantity = operation.openQuantity;
+            saveExpiryData();
+            if (useFirebase && typeof saveExpiryOperationToFirebase === 'function') {
+                saveExpiryOperationToFirebase(expiryOperations[index]).catch(err => console.error('Erro ao ativar operação no Firebase:', err));
+            }
+        }
+    }
+    renderTimeline();
+}
+
 // Salvar encerramento parcial
 function savePartialClose(event) {
     event.preventDefault();
@@ -216,6 +267,11 @@ function savePartialClose(event) {
     const operation = allOperations.find(op => String(op.id) === String(rawOperationId));
 
     if (!operation) return;
+
+    if (operation.status === 'planned') {
+        alert('Ative a operação antes de encerrá-la.');
+        return;
+    }
 
     const closeQuantity = parseFloat(document.getElementById('closeQuantity').value);
     const closePrice = parseFloat(document.getElementById('closePrice').value);
@@ -226,8 +282,8 @@ function savePartialClose(event) {
         return;
     }
 
-    const closedQuantityBefore = (operation.closures || []).reduce((sum, c) => sum + Number(c.quantity || 0), 0);
-    const openQuantity = Number(operation.quantity || 0) - closedQuantityBefore;
+    const closedQuantityBefore = getClosedQuantity(operation);
+    const openQuantity = getOpenQuantity(operation);
     if (closeQuantity > openQuantity) {
         alert(`Quantidade inválida! Aberta: ${openQuantity.toFixed(2)}`);
         return;
@@ -244,6 +300,8 @@ function savePartialClose(event) {
         if (dashOpIndex !== -1) {
             const sourceOperation = dashboardOperations[dashOpIndex];
             sourceOperation.closures = operation.closures;
+            sourceOperation.openQuantity = Math.max(0, remainingQuantity);
+            sourceOperation.status = remainingQuantity > 0 ? 'active' : 'closed';
 
             if (remainingQuantity <= 0) {
                 const closedItem = {
@@ -274,7 +332,11 @@ function savePartialClose(event) {
         }
     } else {
         const expiryOpIndex = expiryOperations.findIndex(op => String(op.id) === String(operation.id));
-        if (expiryOpIndex !== -1) expiryOperations[expiryOpIndex].closures = operation.closures;
+        if (expiryOpIndex !== -1) {
+            expiryOperations[expiryOpIndex].closures = operation.closures;
+            expiryOperations[expiryOpIndex].openQuantity = Math.max(0, remainingQuantity);
+            expiryOperations[expiryOpIndex].status = remainingQuantity > 0 ? 'active' : 'closed';
+        }
 
         if (remainingQuantity <= 0) {
             const sourceOperation = expiryOpIndex !== -1 ? expiryOperations[expiryOpIndex] : operation;
@@ -341,17 +403,29 @@ function deleteClosureItem(operationId, timestamp) {
     const operation = allOperations.find(op => String(op.id) === String(operationId));
     if (operation && operation.closures) {
         operation.closures = operation.closures.filter(c => c.timestamp !== timestamp);
+        operation.openQuantity = operation.status === 'planned'
+            ? 0
+            : Math.max(0, Number(operation.quantity || 0) - getClosedQuantity(operation));
+        if (operation.status === 'closed' && operation.openQuantity > 0) operation.status = 'active';
         
         if (operation.fromDashboard) {
             const dashOpIndex = dashboardOperations.findIndex(op => String(op.id) === String(operation.id));
             if (dashOpIndex !== -1) {
                 dashboardOperations[dashOpIndex].closures = operation.closures;
+                dashboardOperations[dashOpIndex].openQuantity = operation.openQuantity;
+                dashboardOperations[dashOpIndex].status = operation.status;
                 localStorage.setItem('operations', JSON.stringify(dashboardOperations));
                 if (useFirebase && typeof saveOperationToFirebase === 'function') {
                     saveOperationToFirebase(dashboardOperations[dashOpIndex]).catch(err => console.error('Erro ao salvar no Firebase:', err));
                 }
             }
         } else {
+            const expiryOpIndex = expiryOperations.findIndex(op => String(op.id) === String(operation.id));
+            if (expiryOpIndex !== -1) {
+                expiryOperations[expiryOpIndex].closures = operation.closures;
+                expiryOperations[expiryOpIndex].openQuantity = operation.openQuantity;
+                expiryOperations[expiryOpIndex].status = operation.status;
+            }
             saveExpiryData();
         }
         
@@ -430,8 +504,8 @@ function renderTimeline() {
 
         // Renderizar cards das operações da mesma data
         const cardsHTML = operations.map(operation => {
-            const closedQuantity = operation.closures?.reduce((sum, c) => sum + c.quantity, 0) || 0;
-            const openQuantity = operation.quantity - closedQuantity;
+            const closedQuantity = getClosedQuantity(operation);
+            const openQuantity = getOpenQuantity(operation);
             const typeBadge = operation.type.includes('call') ? 'badge-call' : 'badge-put';
             const typeLabel = getTypeLabel(operation.type);
             const totalPnL = calculateTotalClosurePnL(operation);
@@ -439,10 +513,16 @@ function renderTimeline() {
             const sourceLabel = '';
 
             let statusBadge = 'status-open';
-            if (closedQuantity > 0 && openQuantity > 0) {
+            let statusLabel = '🟢 Ativa';
+            if (operation.status === 'planned') {
+                statusBadge = 'status-planned';
+                statusLabel = '⚪ Planejada';
+            } else if (closedQuantity > 0 && openQuantity > 0) {
                 statusBadge = 'status-partial';
+                statusLabel = '🟡 Parcial';
             } else if (openQuantity === 0) {
                 statusBadge = 'status-closed';
+                statusLabel = '🟢 Encerrada';
             }
 
             return `
@@ -516,12 +596,15 @@ function renderTimeline() {
 
                     <div class="position-status">
                         <span class="status-badge ${statusBadge}">
-                            ${statusBadge === 'status-open' ? '🟢 Aberta' : statusBadge === 'status-partial' ? '🟡 Parcial' : '🟢 Encerrada'}
+                            ${statusLabel}
                         </span>
                     </div>
 
                     <div class="expiry-actions">
-                        ${isClosedOperation(operation)
+                        ${operation.status === 'planned'
+                            ? `<button class="btn-close" onclick="activateExpiryOperation(${operation.id})">▶ Ativar</button>
+                               ${!operation.fromDashboard ? `<button class="btn-delete" onclick="deleteExpiryOperation(${operation.id})">🗑️ Deletar</button>` : '<span>Sincronizado</span>'}`
+                            : isClosedOperation(operation)
                             ? '<span class="closed-history-label">✓ Operação encerrada</span>'
                             : `<button class="btn-close" onclick="openClosePartialModal(${operation.id})">💰 Encerrar</button>
                                ${!operation.fromDashboard ? `<button class="btn-delete" onclick="deleteExpiryOperation(${operation.id})">🗑️ Deletar</button>` : '<span>Sincronizado</span>'}`}

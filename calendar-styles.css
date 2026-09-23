@@ -497,6 +497,11 @@
     color: var(--primary-color);
 }
 
+.status-planned {
+    background: rgba(148, 163, 184, 0.2);
+    color: var(--text-secondary);
+}
+
 .status-partial {
     background: rgba(245, 158, 11, 0.2);
     color: var(--warning-color);
