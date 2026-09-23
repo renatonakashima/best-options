@@ -526,7 +526,7 @@ function renderTimeline() {
             }
 
             return `
-                <div class="expiry-card">
+                <div class="expiry-card${operation.status === 'planned' ? ' planned-card' : ''}">
                     <div class="expiry-header">
                         <div>
                             <div class="expiry-title">${operation.asset} - Strike ${operation.strike.toFixed(2)}${sourceLabel}</div>
