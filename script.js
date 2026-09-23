@@ -480,7 +480,10 @@ function updateAnalytics() {
             quantity: calOp.quantity,
             entryPrice: calOp.entryPrice,
             currentPrice: calOp.currentPrice || calOp.entryPrice,
-            notes: calOp.notes || ''
+            notes: calOp.notes || '',
+            status: calOp.status || 'active',
+            createdAt: calOp.createdAt,
+            closures: Array.isArray(calOp.closures) ? calOp.closures : []
         }))
     ];
 
@@ -565,15 +568,17 @@ function updateAnalytics() {
 }
 
 let patrimonyChartInstance = null;
+const chartDatasetVisibility = { buy: true, sell: true, profit: true, loss: true };
 
 function renderPatrimonyChart(allKnownOps) {
     const ctx = document.getElementById('patrimonyChart');
     if (!ctx) return;
 
-    // Agrupar operações por mês (baseado em createdAt ou expiryDate)
+    // O gráfico considera somente ordens ainda planejadas.
+    const plannedOperations = allKnownOps.filter(op => op.status === 'planned');
     const monthlyData = {};
 
-    allKnownOps.forEach(op => {
+    plannedOperations.forEach(op => {
         let dateStr = op.createdAt || op.expiryDate || new Date().toISOString();
         let date = new Date(dateStr);
         if (isNaN(date)) date = new Date();
@@ -581,16 +586,25 @@ function renderPatrimonyChart(allKnownOps) {
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         
         if (!monthlyData[monthKey]) {
-            monthlyData[monthKey] = { invested: 0, pnl: 0 };
+            monthlyData[monthKey] = { buy: 0, sell: 0, profit: 0, loss: 0 };
         }
 
         const qty = Number(op.quantity || 0);
         const entryPrice = Number(op.entryPrice || 0);
-        const invested = qty * entryPrice;
-        const pnl = calculatePnL(op);
+        const orderValue = qty * entryPrice;
+        const operationType = String(op.operationType || op.type || '').toLowerCase();
+        const pnl = Number(calculatePnL(op) || 0);
 
-        monthlyData[monthKey].invested += invested;
-        monthlyData[monthKey].pnl += pnl;
+        if (operationType.includes('sold')) {
+            monthlyData[monthKey].sell += orderValue;
+        } else {
+            monthlyData[monthKey].buy += orderValue;
+        }
+        if (pnl >= 0) {
+            monthlyData[monthKey].profit += pnl;
+        } else {
+            monthlyData[monthKey].loss += pnl;
+        }
     });
 
     // Ordenar os meses cronologicamente
@@ -601,11 +615,14 @@ function renderPatrimonyChart(allKnownOps) {
         const now = new Date();
         const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
         sortedMonths.push(currentMonthKey);
-        monthlyData[currentMonthKey] = { invested: 0, pnl: 0 };
+        monthlyData[currentMonthKey] = { buy: 0, sell: 0, profit: 0, loss: 0 };
     }
 
     const labels = [];
-    const patrimonyValues = [];
+    const buyValues = [];
+    const sellValues = [];
+    const profitValues = [];
+    const lossValues = [];
 
     sortedMonths.forEach(monthKey => {
         const [year, month] = monthKey.split('-');
@@ -613,9 +630,10 @@ function renderPatrimonyChart(allKnownOps) {
         labels.push(`${monthNames[parseInt(month, 10) - 1]}/${year}`);
 
         const dataObj = monthlyData[monthKey];
-        // Patrimônio = Total investido somado com o lucro ou perda
-        const totalPatrimony = dataObj.invested + dataObj.pnl;
-        patrimonyValues.push(totalPatrimony);
+        buyValues.push(dataObj.buy);
+        sellValues.push(dataObj.sell);
+        profitValues.push(dataObj.profit);
+        lossValues.push(dataObj.loss);
     });
 
     if (patrimonyChartInstance) {
@@ -626,17 +644,12 @@ function renderPatrimonyChart(allKnownOps) {
         type: 'line',
         data: {
             labels: labels,
-            datasets: [{
-                label: 'Patrimônio (Investido + P&L)',
-                data: patrimonyValues,
-                borderColor: '#3b82f6',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                borderWidth: 3,
-                fill: true,
-                tension: 0.3,
-                pointRadius: 5,
-                pointBackgroundColor: '#3b82f6'
-            }]
+            datasets: [
+                createChartDataset('buy', 'Ordens de compra', buyValues, '#3b82f6'),
+                createChartDataset('sell', 'Ordens de venda', sellValues, '#f59e0b'),
+                createChartDataset('profit', 'Lucro', profitValues, '#10b981'),
+                createChartDataset('loss', 'Prejuízo', lossValues, '#ef4444')
+            ]
         },
         options: {
             responsive: true,
@@ -650,14 +663,13 @@ function renderPatrimonyChart(allKnownOps) {
                     callbacks: {
                         label: function(context) {
                             let value = context.parsed.y || 0;
-                            return `Patrimônio: R$ ${value.toFixed(2)}`;
+                            return `${context.dataset.label}: R$ ${value.toFixed(2)}`;
                         }
                     }
                 }
             },
             scales: {
                 y: {
-                    beginAtZero: true,
                     grid: {
                         color: 'rgba(255, 255, 255, 0.05)'
                     },
@@ -675,6 +687,31 @@ function renderPatrimonyChart(allKnownOps) {
             }
         }
     });
+}
+
+function createChartDataset(key, label, data, color) {
+    return {
+        key,
+        label,
+        data,
+        hidden: chartDatasetVisibility[key] === false,
+        borderColor: color,
+        backgroundColor: `${color}22`,
+        borderWidth: 3,
+        fill: false,
+        tension: 0.3,
+        pointRadius: 4,
+        pointBackgroundColor: color
+    };
+}
+
+function toggleChartDataset(key, visible) {
+    chartDatasetVisibility[key] = Boolean(visible);
+    if (!patrimonyChartInstance) return;
+    const dataset = patrimonyChartInstance.data.datasets.find(item => item.key === key);
+    if (!dataset) return;
+    dataset.hidden = !visible;
+    patrimonyChartInstance.update();
 }
 
 // Funções auxiliares

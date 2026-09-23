@@ -130,12 +130,34 @@
 
             <!-- Análise -->
                 <div id="analytics" class="tab-pane">
-                <!-- Gráfico de Evolução Patrimonial Mensal -->
+                <!-- Gráfico de evolução das operações planejadas -->
                 <div class="card" style="margin-bottom: 20px;">
-                    <h3>Evolução Patrimonial Mensal</h3>
-                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px;">Valor total investido somado ao lucro/prejuízo por mês</p>
+                    <h3>Evolução das Ordens Planejadas</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px;">Valores das ordens de compra e venda, lucro e prejuízo acumulados por mês</p>
                     <div style="position: relative; height: 300px; width: 100%;">
                         <canvas id="patrimonyChart"></canvas>
+                    </div>
+                    <div class="chart-toggles" aria-label="Linhas exibidas no gráfico">
+                        <label class="chart-toggle chart-toggle-buy">
+                            <input type="checkbox" data-chart-dataset="buy" checked onchange="toggleChartDataset('buy', this.checked)">
+                            <span class="chart-toggle-switch" aria-hidden="true"></span>
+                            <span>Ordens de compra</span>
+                        </label>
+                        <label class="chart-toggle chart-toggle-sell">
+                            <input type="checkbox" data-chart-dataset="sell" checked onchange="toggleChartDataset('sell', this.checked)">
+                            <span class="chart-toggle-switch" aria-hidden="true"></span>
+                            <span>Ordens de venda</span>
+                        </label>
+                        <label class="chart-toggle chart-toggle-profit">
+                            <input type="checkbox" data-chart-dataset="profit" checked onchange="toggleChartDataset('profit', this.checked)">
+                            <span class="chart-toggle-switch" aria-hidden="true"></span>
+                            <span>Lucro</span>
+                        </label>
+                        <label class="chart-toggle chart-toggle-loss">
+                            <input type="checkbox" data-chart-dataset="loss" checked onchange="toggleChartDataset('loss', this.checked)">
+                            <span class="chart-toggle-switch" aria-hidden="true"></span>
+                            <span>Prejuízo</span>
+                        </label>
                     </div>
                 </div>
 
@@ -340,6 +362,6 @@
     <script src="firebase-sync.js"></script>
     
     <!-- Main Script -->
-    <script src="script.js"></script>
+    <script src="script.js?v=planned-lines-1"></script>
 </body>
 </html>

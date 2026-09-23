@@ -119,6 +119,70 @@ body {
     transform: scale(1.06);
 }
 
+.chart-toggles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+}
+
+.chart-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.chart-toggle input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.chart-toggle-switch {
+    position: relative;
+    width: 32px;
+    height: 18px;
+    border-radius: 999px;
+    background: #64748b;
+    transition: background-color 0.2s ease;
+}
+
+.chart-toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: white;
+    transition: transform 0.2s ease;
+}
+
+.chart-toggle input:checked + .chart-toggle-switch {
+    background: var(--primary-color);
+}
+
+.chart-toggle input:checked + .chart-toggle-switch::after {
+    transform: translateX(14px);
+}
+
+.chart-toggle input:focus-visible + .chart-toggle-switch {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.chart-toggle-buy input:checked + .chart-toggle-switch { background: #3b82f6; }
+.chart-toggle-sell input:checked + .chart-toggle-switch { background: #f59e0b; }
+.chart-toggle-profit input:checked + .chart-toggle-switch { background: #10b981; }
+.chart-toggle-loss input:checked + .chart-toggle-switch { background: #ef4444; }
+
 .stat-label {
     display: block;
     font-size: 0.9rem;
