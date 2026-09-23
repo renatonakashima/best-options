@@ -598,11 +598,15 @@ function renderPatrimonyChart(allKnownOps) {
     });
 
     plannedOperations.forEach(op => {
-        let dateStr = op.createdAt || op.expiryDate || new Date().toISOString();
+        // Para ordens planejadas, o mês relevante é o do vencimento da ordem.
+        let dateStr = op.expiryDate || op.createdAt || new Date().toISOString();
         let date = new Date(dateStr);
         if (isNaN(date)) date = new Date();
 
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        if (!monthlyData[monthKey]) {
+            monthlyData[monthKey] = { invested: 0, pnl: 0, buy: 0, sell: 0, profit: 0, loss: 0 };
+        }
         const data = monthlyData[monthKey];
         const qty = Number(op.quantity || 0);
         const entryPrice = Number(op.entryPrice || 0);
@@ -621,6 +625,18 @@ function renderPatrimonyChart(allKnownOps) {
             data.loss += pnl;
         }
     });
+
+    // Manter o mês atual e mais três meses à frente no eixo, mesmo sem ordens nesses meses.
+    const today = new Date();
+    today.setDate(1);
+    for (let offset = 0; offset <= 3; offset += 1) {
+        const chartMonth = new Date(today);
+        chartMonth.setMonth(today.getMonth() + offset);
+        const chartMonthKey = `${chartMonth.getFullYear()}-${String(chartMonth.getMonth() + 1).padStart(2, '0')}`;
+        if (!monthlyData[chartMonthKey]) {
+            monthlyData[chartMonthKey] = { invested: 0, pnl: 0, buy: 0, sell: 0, profit: 0, loss: 0 };
+        }
+    }
 
     // Ordenar os meses cronologicamente
     const sortedMonths = Object.keys(monthlyData).sort();
