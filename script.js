@@ -480,6 +480,7 @@ function updateAnalytics() {
             quantity: calOp.quantity,
             entryPrice: calOp.entryPrice,
             currentPrice: calOp.currentPrice || calOp.entryPrice,
+            expiryDate: calOp.expiryDate,
             notes: calOp.notes || '',
             status: calOp.status || 'active',
             createdAt: calOp.createdAt,
@@ -574,6 +575,15 @@ function renderPatrimonyChart(allKnownOps) {
     const ctx = document.getElementById('patrimonyChart');
     if (!ctx) return;
 
+    const getMonthKey = dateValue => {
+        const rawDate = String(dateValue || '');
+        const dateOnlyMatch = rawDate.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (dateOnlyMatch) return `${dateOnlyMatch[1]}-${dateOnlyMatch[2]}`;
+        const parsedDate = new Date(dateValue);
+        if (Number.isNaN(parsedDate.getTime())) return null;
+        return `${parsedDate.getFullYear()}-${String(parsedDate.getMonth() + 1).padStart(2, '0')}`;
+    };
+
     // A linha patrimonial mantém o cálculo original com todas as operações.
     // As quatro linhas adicionais consideram somente ordens planejadas.
     const plannedOperations = allKnownOps.filter(op => op.status === 'planned');
@@ -581,10 +591,7 @@ function renderPatrimonyChart(allKnownOps) {
 
     allKnownOps.forEach(op => {
         let dateStr = op.createdAt || op.expiryDate || new Date().toISOString();
-        let date = new Date(dateStr);
-        if (isNaN(date)) date = new Date();
-
-        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        const monthKey = getMonthKey(dateStr) || getMonthKey(new Date());
         
         if (!monthlyData[monthKey]) {
             monthlyData[monthKey] = { invested: 0, pnl: 0, buy: 0, sell: 0, profit: 0, loss: 0 };
@@ -600,10 +607,7 @@ function renderPatrimonyChart(allKnownOps) {
     plannedOperations.forEach(op => {
         // Para ordens planejadas, o mês relevante é o do vencimento da ordem.
         let dateStr = op.expiryDate || op.createdAt || new Date().toISOString();
-        let date = new Date(dateStr);
-        if (isNaN(date)) date = new Date();
-
-        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        const monthKey = getMonthKey(dateStr) || getMonthKey(new Date());
         if (!monthlyData[monthKey]) {
             monthlyData[monthKey] = { invested: 0, pnl: 0, buy: 0, sell: 0, profit: 0, loss: 0 };
         }
