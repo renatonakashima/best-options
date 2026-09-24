@@ -656,6 +656,7 @@ function renderPatrimonyChart(allKnownOps) {
     const profitValues = [];
     const lossValues = [];
     let accumulatedBuyValue = 0;
+    let accumulatedSellValue = 0;
 
     sortedMonths.forEach(monthKey => {
         const [year, month] = monthKey.split('-');
@@ -667,7 +668,9 @@ function renderPatrimonyChart(allKnownOps) {
         // Cada ponto representa o total acumulado de quantidade x preço das compras planejadas.
         accumulatedBuyValue += dataObj.buy;
         buyValues.push(accumulatedBuyValue);
-        sellValues.push(dataObj.sell);
+        // Cada ponto representa o total acumulado de quantidade x preço das vendas planejadas.
+        accumulatedSellValue += dataObj.sell;
+        sellValues.push(accumulatedSellValue);
         profitValues.push(dataObj.profit);
         lossValues.push(dataObj.loss);
     });
@@ -683,7 +686,7 @@ function renderPatrimonyChart(allKnownOps) {
             datasets: [
                 createChartDataset('patrimony', 'Patrimônio (Investido + P&L)', patrimonyValues, '#3b82f6'),
                 createChartDataset('buy', 'Ordens de compra (acumulado)', buyValues, '#06b6d4'),
-                createChartDataset('sell', 'Ordens de venda', sellValues, '#f59e0b'),
+                createChartDataset('sell', 'Ordens de venda (acumulado)', sellValues, '#f59e0b'),
                 createChartDataset('profit', 'Lucro', profitValues, '#10b981'),
                 createChartDataset('loss', 'Prejuízo', lossValues, '#ef4444')
             ]
