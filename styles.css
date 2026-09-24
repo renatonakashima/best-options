@@ -179,8 +179,8 @@ body {
 }
 
 .chart-toggle-patrimony input:checked + .chart-toggle-switch { background: #3b82f6; }
-.chart-toggle-buy input:checked + .chart-toggle-switch { background: #06b6d4; }
-.chart-toggle-sell input:checked + .chart-toggle-switch { background: #f59e0b; }
+.chart-toggle-buy input:checked + .chart-toggle-switch { background: #f87171; }
+.chart-toggle-sell input:checked + .chart-toggle-switch { background: #34d399; }
 .chart-toggle-profit input:checked + .chart-toggle-switch { background: #10b981; }
 .chart-toggle-loss input:checked + .chart-toggle-switch { background: #ef4444; }
 

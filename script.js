@@ -689,8 +689,8 @@ function renderPatrimonyChart(allKnownOps) {
             labels: labels,
             datasets: [
                 createChartDataset('patrimony', 'Patrimônio (Investido + P&L)', patrimonyValues, '#3b82f6'),
-                createChartDataset('buy', 'Compras Planejadas (acumulado)', buyValues, '#06b6d4'),
-                createChartDataset('sell', 'Vendas Planejadas (acumulado)', sellValues, '#f59e0b'),
+                createChartDataset('buy', 'Compras Planejadas (acumulado)', buyValues, '#f87171'),
+                createChartDataset('sell', 'Vendas Planejadas (acumulado)', sellValues, '#34d399'),
                 createChartDataset('profit', 'Lucro', profitValues, '#10b981'),
                 createChartDataset('loss', 'Prejuízo', lossValues, '#ef4444')
             ]
